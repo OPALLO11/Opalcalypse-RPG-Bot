@@ -1,0 +1,39 @@
+# Virtual environment
+.venv/
+venv/
+ENV/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDEs
+.vscode/
+.idea/
+
+# SQLite databases & backups
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+db.json
+
+# Config & Secret files
+.env
+config.json
+tokens.json
+.tio.tokens.json
+
+# Logs & temp files
+*.log
+out.txt
+error.txt
+sig.txt
+temp_litedb/
+obs_boss_hp.txt
+obs_boss_name.txt
