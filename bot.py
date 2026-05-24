@@ -175,7 +175,7 @@ async def dispatch_command(command_name, args_str, ctx):
         traceback.print_exc()
 
 async def process_art_bits(username, bits, content):
-    from ai_art import handle_bits
+    from services.ai_art import handle_bits
     success, result = await asyncio.to_thread(handle_bits, username, bits, content)
     if success:
         emit_to_overlay('show_art', result)

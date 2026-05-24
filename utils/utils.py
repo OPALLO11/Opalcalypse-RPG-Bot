@@ -2,7 +2,7 @@ import os
 import requests
 import json
 
-CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'config.json')
+CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config.json')
 
 def load_config():
     try:
@@ -26,7 +26,7 @@ def emit_to_overlay(event_name, data):
 def write_obs_boss_files(boss_name, current_hp, max_hp):
     """Write boss details to local text files for OBS GDI+ text source integration"""
     try:
-        data_dir = os.path.join(os.path.dirname(__file__), 'data')
+        data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
         os.makedirs(data_dir, exist_ok=True)
         
         name_path = os.path.join(data_dir, 'obs_boss_name.txt')
