@@ -9,17 +9,58 @@ from dotenv import load_dotenv
 
 from database import db
 from game.boss_manager import boss_manager
+from game.helpers import split_message
 from utils import load_config, emit_to_overlay, send_streamerbot_message
 from cogs.combat import CombatCog
 from cogs.info import InfoCog
 from game.combat import LAST_ACTIVE
 from game.challenge_manager import init_challenges
 
+import twitchio
+from twitchio.ext import commands as tio_commands
+
 load_dotenv()
 
-# Instantiate the cogs with a dummy bot reference
+# Instantiate the cogs with a dummy bot reference for local WS server mode
 combat_cog = CombatCog(None)
 info_cog = InfoCog(None)
+
+class RPGBot(tio_commands.Bot):
+    def __init__(self, token, client_id, prefix, initial_channels):
+        super().__init__(
+            token=token,
+            client_id=client_id,
+            prefix=prefix,
+            initial_channels=initial_channels
+        )
+        self.add_cog(CombatCog(self))
+        self.add_cog(InfoCog(self))
+        
+    async def event_ready(self):
+        print(f"Logged in as | {self.nick}")
+        if hasattr(self, 'user_id'):
+            print(f"User id is | {self.user_id}")
+        print(f"Joined channels | {self.connected_channels}")
+        
+    async def event_message(self, message):
+        if message.echo:
+            return
+            
+        author_name = message.author.name if message.author else "System"
+        print(f"[Twitch Chat] {author_name}: {message.content}")
+        
+        # Bits detection
+        bits = 0
+        if message.tags and 'bits' in message.tags:
+            try:
+                bits = int(message.tags['bits'])
+            except:
+                pass
+        if bits >= 100 and message.author:
+            print(f"[Bits Art] {author_name} cheered {bits} bits with message: {message.content}")
+            asyncio.create_task(process_art_bits(author_name, bits, message.content))
+            
+        await self.handle_commands(message)
 
 class WSContext:
     def __init__(self, websocket, data, config):
@@ -60,19 +101,7 @@ class WSContext:
         return Author(self.author_name, self.author_id, self.is_mod)
 
     async def send(self, message):
-        # Split message if it's very long or contains newlines (Twitch has 500 char limit)
-        messages = [message]
-        if len(message) > 450:
-            messages = []
-            remaining = message
-            while len(remaining) > 400:
-                split_idx = remaining.rfind(' ', 0, 400)
-                if split_idx == -1:
-                    split_idx = 400
-                messages.append(remaining[:split_idx])
-                remaining = remaining[split_idx:].strip()
-            if remaining:
-                messages.append(remaining)
+        messages = split_message(message, max_len=400)
 
         import websockets
         for msg in messages:
@@ -98,84 +127,101 @@ class WSContext:
             # 2. Send via HTTP POST (this is the most reliable way to broadcast to Twitch)
             send_streamerbot_message(msg)
 
+# ---------------------------------------------------------------------------
+# Command registry: maps command names (incl. aliases) to cog + method + args.
+# 'args' defines how to parse the raw args_str into keyword arguments.
+#   - 'all'          -> passes the full args_str as the first kwarg
+#   - 'parts'        -> passes the full parts list as *args
+#   - 'first'        -> passes only parts[0] (or "") as the first kwarg
+#   - 'skill_target' -> passes parts[0] as skill_name, rest as target
+#   - None / []      -> no arguments
+# ---------------------------------------------------------------------------
+COMMAND_REGISTRY = {
+    # CombatCog commands
+    'attack':     {'cog': 'combat', 'method': 'cmd_attack'},
+    'atk':        {'cog': 'combat', 'method': 'cmd_attack'},
+    'skill':      {'cog': 'combat', 'method': 'cmd_skill',     'args': 'skill_target'},
+    'sk':         {'cog': 'combat', 'method': 'cmd_skill',     'args': 'skill_target'},
+    'ultimate':   {'cog': 'combat', 'method': 'cmd_ultimate'},
+    'ult':        {'cog': 'combat', 'method': 'cmd_ultimate'},
+    'def':        {'cog': 'combat', 'method': 'cmd_def',       'args': ('all', 'skill_name')},
+    'spawn':      {'cog': 'combat', 'method': 'cmd_spawn',     'args': ('first', 'type_arg')},
+    'sp':         {'cog': 'combat', 'method': 'cmd_spawn',     'args': ('first', 'type_arg')},
+    'spwn':       {'cog': 'combat', 'method': 'cmd_spawn',     'args': ('first', 'type_arg')},
+    # InfoCog commands
+    'test':       {'cog': 'info',   'method': 'cmd_test'},
+    'boss':       {'cog': 'info',   'method': 'cmd_boss'},
+    'bs':         {'cog': 'info',   'method': 'cmd_boss'},
+    'register':   {'cog': 'info',   'method': 'cmd_register',  'args': 'parts'},
+    'reg':        {'cog': 'info',   'method': 'cmd_register',  'args': 'parts'},
+    'regis':      {'cog': 'info',   'method': 'cmd_register',  'args': 'parts'},
+    'changeclass':{'cog': 'info',   'method': 'cmd_changeclass','args': ('first', 'new_class')},
+    'cc':         {'cog': 'info',   'method': 'cmd_changeclass','args': ('first', 'new_class')},
+    'ccl':        {'cog': 'info',   'method': 'cmd_changeclass','args': ('first', 'new_class')},
+    'rename':     {'cog': 'info',   'method': 'cmd_rename',    'args': ('all', 'new_name')},
+    'rn':         {'cog': 'info',   'method': 'cmd_rename',    'args': ('all', 'new_name')},
+    'inventory':  {'cog': 'info',   'method': 'cmd_inventory'},
+    'inv':        {'cog': 'info',   'method': 'cmd_inventory'},
+    'equip':      {'cog': 'info',   'method': 'cmd_equip',     'args': ('all', 'item_name')},
+    'eq':         {'cog': 'info',   'method': 'cmd_equip',     'args': ('all', 'item_name')},
+    'unequip':    {'cog': 'info',   'method': 'cmd_unequip',   'args': ('first', 'slot_name')},
+    'uneq':       {'cog': 'info',   'method': 'cmd_unequip',   'args': ('first', 'slot_name')},
+    'uq':         {'cog': 'info',   'method': 'cmd_unequip',   'args': ('first', 'slot_name')},
+    'sell':       {'cog': 'info',   'method': 'cmd_sell',      'args': ('all', 'target')},
+    'sel':        {'cog': 'info',   'method': 'cmd_sell',      'args': ('all', 'target')},
+    'stats':      {'cog': 'info',   'method': 'cmd_stats'},
+    'stat':       {'cog': 'info',   'method': 'cmd_stats'},
+    'st':         {'cog': 'info',   'method': 'cmd_stats'},
+    'info':       {'cog': 'info',   'method': 'cmd_info'},
+    'classes':    {'cog': 'info',   'method': 'cmd_classes'},
+    'class':      {'cog': 'info',   'method': 'cmd_classes'},
+    'cls':        {'cog': 'info',   'method': 'cmd_classes'},
+    'gold':       {'cog': 'info',   'method': 'cmd_gold'},
+    'money':      {'cog': 'info',   'method': 'cmd_gold'},
+    'gld':        {'cog': 'info',   'method': 'cmd_gold'},
+    'shop':       {'cog': 'info',   'method': 'cmd_shop'},
+    'shp':        {'cog': 'info',   'method': 'cmd_shop'},
+    'buy':        {'cog': 'info',   'method': 'cmd_buy',       'args': ('first', 'item_name')},
+    'b':          {'cog': 'info',   'method': 'cmd_buy',       'args': ('first', 'item_name')},
+    'inspect':    {'cog': 'info',   'method': 'cmd_inspect',   'args': ('first', 'target_name')},
+    'equipment':  {'cog': 'info',   'method': 'cmd_inspect',   'args': ('first', 'target_name')},
+    'equipments': {'cog': 'info',   'method': 'cmd_inspect',   'args': ('first', 'target_name')},
+    'ins':        {'cog': 'info',   'method': 'cmd_inspect',   'args': ('first', 'target_name')},
+}
+
+
 async def dispatch_command(command_name, args_str, ctx):
     command_name = command_name.lower()
-    parts = args_str.strip().split() if args_str else []
-    
-    try:
-        if command_name in ('attack', 'atk'):
-            await combat_cog.cmd_attack._callback(combat_cog, ctx)
-            
-        elif command_name in ('skill', 'sk'):
-            skill_name = parts[0] if len(parts) > 0 else ""
-            target = " ".join(parts[1:]) if len(parts) > 1 else ""
-            await combat_cog.cmd_skill._callback(combat_cog, ctx, skill_name=skill_name, target=target)
-            
-        elif command_name in ('ultimate', 'ult'):
-            await combat_cog.cmd_ultimate._callback(combat_cog, ctx)
-            
-        elif command_name == 'def':
-            skill_name = " ".join(parts) if parts else ""
-            await combat_cog.cmd_def._callback(combat_cog, ctx, skill_name=skill_name)
-            
-        elif command_name in ('spawn', 'sp', 'spwn'):
-            type_arg = parts[0] if parts else 'normal'
-            await combat_cog.cmd_spawn._callback(combat_cog, ctx, type_arg=type_arg)
-            
-        elif command_name in ('boss', 'bs'):
-            await info_cog.cmd_boss._callback(info_cog, ctx)
-            
-        elif command_name in ('register', 'reg', 'regis'):
-            await info_cog.cmd_register._callback(info_cog, ctx, *parts)
-            
-        elif command_name in ('changeclass', 'cc', 'ccl'):
-            new_class = parts[0] if parts else ""
-            await info_cog.cmd_changeclass._callback(info_cog, ctx, new_class=new_class)
-            
-        elif command_name in ('rename', 'rn'):
-            await info_cog.cmd_rename._callback(info_cog, ctx, new_name=args_str)
-            
-        elif command_name in ('inventory', 'inv'):
-            await info_cog.cmd_inventory._callback(info_cog, ctx)
-            
-        elif command_name in ('equip', 'eq'):
-            await info_cog.cmd_equip._callback(info_cog, ctx, item_name=args_str)
-            
-        elif command_name in ('unequip', 'uneq', 'uq'):
-            slot_name = parts[0] if parts else ""
-            await info_cog.cmd_unequip._callback(info_cog, ctx, slot_name=slot_name)
-            
-        elif command_name in ('sell', 'sel'):
-            await info_cog.cmd_sell._callback(info_cog, ctx, target=args_str)
-            
-        elif command_name in ('stats', 'stat', 'st'):
-            await info_cog.cmd_stats._callback(info_cog, ctx)
-            
-        elif command_name == 'info':
-            await info_cog.cmd_info._callback(info_cog, ctx)
-            
-        elif command_name in ('classes', 'class', 'cls'):
-            await info_cog.cmd_classes._callback(info_cog, ctx)
-            
-        elif command_name in ('gold', 'money', 'gld'):
-            await info_cog.cmd_gold._callback(info_cog, ctx)
-            
-        elif command_name in ('shop', 'shp'):
-            await info_cog.cmd_shop._callback(info_cog, ctx)
-            
-        elif command_name in ('buy', 'b'):
-            item_name = parts[0] if parts else ""
-            await info_cog.cmd_buy._callback(info_cog, ctx, item_name=item_name)
+    entry = COMMAND_REGISTRY.get(command_name)
+    if not entry:
+        return  # Unknown command, silently ignore
 
-        elif command_name in ('inspect', 'equipment', 'equipments', 'ins'):
-            target_name = parts[0] if parts else ""
-            await info_cog.cmd_inspect._callback(info_cog, ctx, target_name=target_name)
+    cog = combat_cog if entry['cog'] == 'combat' else info_cog
+    method = getattr(cog, entry['method'])
+    args_spec = entry.get('args')
+    parts = args_str.strip().split() if args_str else []
+
+    try:
+        if args_spec is None:
+            await method._callback(cog, ctx)
+        elif args_spec == 'parts':
+            await method._callback(cog, ctx, *parts)
+        elif args_spec == 'skill_target':
+            skill_name = parts[0] if parts else ""
+            target = " ".join(parts[1:]) if len(parts) > 1 else ""
+            await method._callback(cog, ctx, skill_name=skill_name, target=target)
+        elif isinstance(args_spec, tuple):
+            mode, kwarg_name = args_spec
+            if mode == 'all':
+                await method._callback(cog, ctx, **{kwarg_name: args_str or ""})
+            elif mode == 'first':
+                await method._callback(cog, ctx, **{kwarg_name: parts[0] if parts else ""})
     except Exception as e:
         print(f"Error executing command !{command_name}: {e}")
         traceback.print_exc()
 
 async def process_art_bits(username, bits, content):
-    from ai_art import handle_bits
+    from services.ai_art import handle_bits
     success, result = await asyncio.to_thread(handle_bits, username, bits, content)
     if success:
         emit_to_overlay('show_art', result)
@@ -364,84 +410,6 @@ async def websocket_server_listener():
         print(f"Failed to start WebSocket Server on port {port}: {e}")
         traceback.print_exc()
 
-async def websocket_listener():
-    config = load_config()
-    sb_config = config.get('streamerbot', {})
-    ws_url = sb_config.get('ws_url', 'ws://127.0.0.1:8080/')
-    
-    while True:
-        try:
-            print(f"Connecting to Streamer.bot WebSocket at {ws_url}...")
-            async with websockets.connect(ws_url) as websocket:
-                print("Connected to Streamer.bot WebSocket!")
-                
-                # Subscribe to Twitch events
-                sub_payload = {
-                    "request": "Subscribe",
-                    "events": {
-                        "Twitch": ["ChatMessage", "RewardRedemption"]
-                    },
-                    "id": "rpg-bot-subscription"
-                }
-                await websocket.send(json.dumps(sub_payload))
-                
-                async for message in websocket:
-                    try:
-                        event_obj = json.loads(message)
-                        
-                        # Check subscription confirmation
-                        if event_obj.get('status') == 'ok' and event_obj.get('id') == 'rpg-bot-subscription':
-                            print("Successfully subscribed to Twitch events!")
-                            continue
-                            
-                        event_type = event_obj.get('event', {}).get('type')
-                        event_source = event_obj.get('event', {}).get('source')
-                        data = event_obj.get('data', {})
-                        
-                        if event_source == 'Twitch':
-                            if event_type == 'ChatMessage':
-                                msg_text = data.get('text') or data.get('message', {}).get('message') or ""
-                                username = data.get('userName') or data.get('userLogin') or data.get('user', {}).get('name') or data.get('user', {}).get('login') or ""
-                                print(f"[Twitch Chat] {username}: {msg_text}")
-                                
-                                # Process bits if present
-                                bits = 0
-                                try:
-                                    bits = int(data.get('bits') or data.get('message', {}).get('bits') or 0)
-                                except:
-                                    pass
-                                    
-                                if bits >= 100:
-                                    print(f"[Bits Art] {username} cheered {bits} bits with message: {msg_text}")
-                                    asyncio.create_task(process_art_bits(username, bits, msg_text))
-                                    
-                                if msg_text.startswith('!'):
-                                    parts = msg_text.split(' ', 1)
-                                    command_name = parts[0][1:].lower()
-                                    args_str = parts[1] if len(parts) > 1 else ""
-                                    print(f"[Command] Triggered !{command_name} with args '{args_str}' by {username}")
-                                    
-                                    ctx = WSContext(websocket, data, config)
-                                    asyncio.create_task(dispatch_command(command_name, args_str, ctx))
-                                    
-                            elif event_type == 'RewardRedemption':
-                                reward_name = data.get('rewardName')
-                                user = data.get('user') or data.get('userName') or ""
-                                if reward_name == 'Revive Party':
-                                    handle_websocket_revive(user)
-                    except json.JSONDecodeError:
-                        pass
-                    except Exception as e:
-                        print(f"Error handling WebSocket message: {e}")
-                        traceback.print_exc()
-        except (websockets.exceptions.ConnectionClosed, ConnectionRefusedError, OSError) as e:
-            print(f"WebSocket connection error: {e}. Reconnecting in 5 seconds...")
-            await asyncio.sleep(5)
-        except Exception as e:
-            print(f"Unexpected error in WebSocket client: {e}. Reconnecting in 5 seconds...")
-            traceback.print_exc()
-            await asyncio.sleep(5)
-
 def run_bot():
     db.reset_rename_limits()
     
@@ -458,7 +426,7 @@ def run_bot():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     
-    # Start both the listener and the background tasks
+    # Start both background loops
     loop.create_task(regen_loop())
     loop.create_task(boss_attack_loop())
     
@@ -470,4 +438,28 @@ def run_bot():
     if use_server:
         loop.run_until_complete(websocket_server_listener())
     else:
-        loop.run_until_complete(websocket_listener())
+        from api.twitch_auth import get_valid_token
+        token = get_valid_token()
+        if not token:
+            token = os.environ.get('TWITCH_TOKEN')
+        if not token:
+            token = config.get('twitch', {}).get('oauth_token')
+            
+        if token and not token.startswith('oauth:'):
+            token = f"oauth:{token}"
+            
+        client_id = os.environ.get('TWITCH_CLIENT_ID') or config.get('twitch', {}).get('client_id')
+        channel = os.environ.get('TWITCH_CHANNEL') or config.get('twitch', {}).get('channel') or 'opallo11'
+        prefix = '!'
+        
+        print("Initializing native TwitchIO RPGBot...")
+        bot = RPGBot(token=token, client_id=client_id, prefix=prefix, initial_channels=[channel])
+        
+        from utils import set_bot
+        set_bot(bot, loop)
+        
+        loop.create_task(bot.connect())
+        try:
+            loop.run_forever()
+        except KeyboardInterrupt:
+            pass

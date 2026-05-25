@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opallo RPG Overlay</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="overlay-container">
+        <!-- Combat Log Section -->
+        <div id="combat-log">
+            <ul id="log-list"></ul>
+        </div>
+
+        <div id="boss-container" class="hidden">
+            <div id="boss-name-wrapper">
+                <img id="boss-name-bg" src="images/nameplate_frame.png" alt="Name Frame">
+                <h2 id="boss-name">Waiting for boss...</h2>
+            </div>
+            
+            <img id="boss-image" src="" alt="Boss Image" class="hidden">
+            
+            <div id="boss-stars"></div>
+            
+            <div id="boss-ui-wrapper">
+                <!-- Replace src with your actual image file name -->
+                <img id="boss-hp-frame" src="images/Boss_Frame.png" alt="HP Frame">
+                
+                <div id="hp-bar-bg">
+                    <div id="hp-bar-fill"></div>
+                </div>
+                
+                <p id="hp-text">1000 / 1000</p>
+            </div>
+        </div>
+
+        <!-- Stream-Wide Challenge Widget -->
+        <div id="challenge-box" class="hidden">
+            <div id="challenge-header">🏆 STREAM CHALLENGE</div>
+            <div id="challenge-desc">กำลังโหลดคำท้าทาย...</div>
+            <div id="challenge-bar-bg">
+                <div id="challenge-bar-fill"></div>
+                <span id="challenge-bar-text">0 / 0</span>
+            </div>
+            <div id="challenge-reward-wrapper">
+                <span class="reward-label">รางวัล:</span>
+                <span id="challenge-reward">กำลังโหลด...</span>
+            </div>
+        </div>
+
+        <!-- Party Grid Overlay -->
+        <div id="party-container" class="hidden">
+            <div class="party-title">Party</div>
+            <div id="party-list"></div>
+        </div>
+
+        <!-- AI Art Showcase Section -->
+        <div id="art-showcase" class="hidden">
+            <img id="art-image" src="" alt="AI Art">
+            <div id="art-info">
+                <h3 id="art-prompt"></h3>
+                <p id="art-creator"></p>
+            </div>
+        </div>
+
+        <!-- Player Inspection Overlay -->
+        <div id="inspect-container" class="hidden">
+            <div id="inspect-card">
+                <div id="inspect-header">
+                    <span id="inspect-class-icon">⚔️</span>
+                    <h2 id="inspect-name">Player Name</h2>
+                    <span id="inspect-level">Lv.1</span>
+                </div>
+                <div id="inspect-slots">
+                    <div class="inspect-slot" id="slot-weapon">
+                        <div class="slot-label">Weapon</div>
+                        <div class="slot-item-frame">
+                            <img class="slot-item-image" id="inspect-weapon-img" src="images/items/empty_weapon.png" alt="Weapon">
+                            <span class="slot-item-enhancement" id="inspect-weapon-enh"></span>
+                        </div>
+                        <div class="slot-item-name" id="inspect-weapon-name">Empty</div>
+                    </div>
+                    <div class="inspect-slot" id="slot-armor">
+                        <div class="slot-label">Armor</div>
+                        <div class="slot-item-frame">
+                            <img class="slot-item-image" id="inspect-armor-img" src="images/items/empty_armor.png" alt="Armor">
+                            <span class="slot-item-enhancement" id="inspect-armor-enh"></span>
+                        </div>
+                        <div class="slot-item-name" id="inspect-armor-name">Empty</div>
+                    </div>
+                    <div class="inspect-slot" id="slot-accessory">
+                        <div class="slot-label">Accessory</div>
+                        <div class="slot-item-frame">
+                            <img class="slot-item-image" id="inspect-accessory-img" src="images/items/empty_accessory.png" alt="Accessory">
+                            <span class="slot-item-enhancement" id="inspect-accessory-enh"></span>
+                        </div>
+                        <div class="slot-item-name" id="inspect-accessory-name">Empty</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Standalone Weapon Overlay (9:16 Greenscreen) -->
+        <div id="weapon-standalone-container" class="hidden">
+            <img id="weapon-standalone-image" src="" alt="Equipped Weapon">
+        </div>
+    </div>
+
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
