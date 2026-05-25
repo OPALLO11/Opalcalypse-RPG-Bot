@@ -196,69 +196,53 @@ class SQLiteDatabase:
             conn.commit()
             conn.close()
 
+    def _hydrate_player(self, row):
+        """Shared post-processing for a raw player DB row."""
+        if not row:
+            return None
+        p = dict(row)
+        try:
+            p['class_levels'] = json.loads(p.get('class_levels') or '{}')
+        except Exception:
+            p['class_levels'] = {}
+        cls_name = p.get('class', 'warrior').lower()
+        if cls_name in p['class_levels']:
+            p['level'] = p['class_levels'][cls_name].get('level', p.get('level', 1))
+        else:
+            p['level'] = p.get('level', 1)
+
+        # Dynamic stats capping
+        try:
+            from game.logic import calculate_player_stats
+            s = calculate_player_stats(p)
+            if p['hp'] > s['max_hp']:
+                p['hp'] = s['max_hp']
+            if p['mp'] > s['max_mp']:
+                p['mp'] = s['max_mp']
+        except Exception as e:
+            print(f"Error capping player HP/MP: {e}")
+
+        return p
+
     def get_player(self, username):
         conn = self.get_connection()
-        c = conn.cursor()
-        c.execute("SELECT * FROM players WHERE username = ? OR LOWER(character_name) = ?", (username.lower(), username.lower()))
-        row = c.fetchone()
-        conn.close()
-        if row:
-            p = dict(row)
-            try:
-                p['class_levels'] = json.loads(p.get('class_levels') or '{}')
-            except:
-                p['class_levels'] = {}
-            cls_name = p.get('class', 'warrior').lower()
-            if cls_name in p['class_levels']:
-                p['level'] = p['class_levels'][cls_name].get('level', p.get('level', 1))
-            else:
-                p['level'] = p.get('level', 1)
-
-            # Dynamic stats capping
-            try:
-                from game.logic import calculate_player_stats
-                s = calculate_player_stats(p)
-                if p['hp'] > s['max_hp']:
-                    p['hp'] = s['max_hp']
-                if p['mp'] > s['max_mp']:
-                    p['mp'] = s['max_mp']
-            except Exception as e:
-                print(f"Error capping player HP/MP in get_player: {e}")
-
-            return p
-        return None
+        try:
+            c = conn.cursor()
+            c.execute("SELECT * FROM players WHERE username = ? OR LOWER(character_name) = ?", (username.lower(), username.lower()))
+            row = c.fetchone()
+        finally:
+            conn.close()
+        return self._hydrate_player(row)
 
     def get_player_by_id(self, player_id):
         conn = self.get_connection()
-        c = conn.cursor()
-        c.execute("SELECT * FROM players WHERE id = ?", (player_id,))
-        row = c.fetchone()
-        conn.close()
-        if row:
-            p = dict(row)
-            try:
-                p['class_levels'] = json.loads(p.get('class_levels') or '{}')
-            except:
-                p['class_levels'] = {}
-            cls_name = p.get('class', 'warrior').lower()
-            if cls_name in p['class_levels']:
-                p['level'] = p['class_levels'][cls_name].get('level', p.get('level', 1))
-            else:
-                p['level'] = p.get('level', 1)
-
-            # Dynamic stats capping
-            try:
-                from game.logic import calculate_player_stats
-                s = calculate_player_stats(p)
-                if p['hp'] > s['max_hp']:
-                    p['hp'] = s['max_hp']
-                if p['mp'] > s['max_mp']:
-                    p['mp'] = s['max_mp']
-            except Exception as e:
-                print(f"Error capping player HP/MP in get_player_by_id: {e}")
-
-            return p
-        return None
+        try:
+            c = conn.cursor()
+            c.execute("SELECT * FROM players WHERE id = ?", (player_id,))
+            row = c.fetchone()
+        finally:
+            conn.close()
+        return self._hydrate_player(row)
 
     def create_player(self, username, twitch_id, character_name, class_name="warrior"):
         with self.lock:
@@ -326,149 +310,54 @@ class SQLiteDatabase:
             conn.close()
             return {"id": new_id, "owner_id": owner_id, "item_id": item_id, "obtained_from": boss_name, "obtained_at": now, "enhancement_level": 0}
 
-    def give_item_or_enhance(self, owner_id, item_data, boss_name=""):
-        item_id = item_data.get('id', 'unknown') if isinstance(item_data, dict) else str(item_data)
-        item_tier = item_data.get('tier', 'R') if isinstance(item_data, dict) else 'R'
-        
-        conn = self.get_connection()
-        c = conn.cursor()
-        c.execute("SELECT id, enhancement_level FROM items WHERE owner_id = ? AND item_id = ?", (owner_id, item_id))
-        existing = c.fetchone()
-        conn.close()
-        
-        if existing:
-            current_enh = existing['enhancement_level'] or 0
-            if current_enh >= 9:
-                # Maxed out, give EXP instead
-                from game.logic import add_exp
-                add_exp(owner_id, 500)
-                return {"action": "converted_exp", "amount": 500, "item_id": item_id, "enhancement_level": 9}
-                
-            target_enh = current_enh + 1
-            broke = False
-            success = True
-            
-            # Base success rates for +7, +8, +9
-            base_rates = {7: 0.60, 8: 0.40, 9: 0.20}
-            
-            with self.lock:
-                conn = self.get_connection()
-                
-                scroll_consumed = False
-                prevent_break = False
-                success_bonus = 0.0
-                required_scroll = None
-                
-                if target_enh >= 7:
-                    c_scroll = conn.cursor()
-                    c_scroll.execute("SELECT scroll_t1, scroll_t2, scroll_t3 FROM players WHERE id = ?", (owner_id,))
-                    p_row = c_scroll.fetchone()
-                    
-                    if p_row:
-                        if item_tier in ['R', 'SR']:
-                            required_scroll = 'scroll_t1'
-                        elif item_tier == 'SSR':
-                            required_scroll = 'scroll_t2'
-                        elif item_tier == 'UR':
-                            required_scroll = 'scroll_t3'
-                            
-                        if required_scroll and p_row[required_scroll] > 0:
-                            # Consume the scroll
-                            scroll_consumed = True
-                            conn.execute(f"UPDATE players SET {required_scroll} = {required_scroll} - 1 WHERE id = ?", (owner_id,))
-                            
-                            if required_scroll == 'scroll_t1':
-                                # 75% chance to prevent break
-                                if random.random() < 0.75: prevent_break = True
-                            elif required_scroll == 'scroll_t2':
-                                prevent_break = True
-                                success_bonus = 0.10
-                            elif required_scroll == 'scroll_t3':
-                                prevent_break = True
-                                success_bonus = 0.25
-                                
-                    # Roll for success
-                    final_success_rate = base_rates.get(target_enh, 1.0) + success_bonus
-                    if random.random() > final_success_rate:
-                        success = False
-                        if not prevent_break:
-                            broke = True
-                            
-                if success:
-                    conn.execute("UPDATE items SET enhancement_level = ? WHERE id = ?", (target_enh, existing['id']))
-                    conn.commit()
-                    conn.close()
-                    return {"action": "enhanced", "item_id": item_id, "new_level": target_enh}
-                elif scroll_consumed and not broke:
-                    conn.commit()
-                    conn.close()
-                    return {"action": "failed_protected", "item_id": item_id, "attempted_level": target_enh}
-                elif broke:
-                    conn.execute("DELETE FROM items WHERE id = ?", (existing['id'],))
-                    
-                    # Unequip if currently equipped
-                    c_eq = conn.cursor()
-                    c_eq.execute("UPDATE players SET equipped_weapon = NULL WHERE id = ? AND equipped_weapon = ?", (owner_id, existing['id']))
-                    c_eq.execute("UPDATE players SET equipped_armor = NULL WHERE id = ? AND equipped_armor = ?", (owner_id, existing['id']))
-                    c_eq.execute("UPDATE players SET equipped_accessory = NULL WHERE id = ? AND equipped_accessory = ?", (owner_id, existing['id']))
-                    
-                    conn.commit()
-                    conn.close()
-                    return {"action": "broke", "item_id": item_id, "attempted_level": target_enh}
-                else:
-                    # Should only happen if it fails but wasn't going to break anyway (e.g. < 7? No, all < 7 are 100% success right now since base_rates.get is 1.0)
-                    conn.commit()
-                    conn.close()
-                    return {"action": "failed", "item_id": item_id, "attempted_level": target_enh}
-        else:
-            new_doc = self.add_item(owner_id, item_data, boss_name)
-            new_doc["action"] = "new"
-            return new_doc
+    # NOTE: give_item_or_enhance() has been moved to game/enhancement.py
 
     def get_active_boss(self):
         conn = self.get_connection()
-        c = conn.cursor()
-        c.execute("SELECT * FROM bosses WHERE status = 'active' ORDER BY instance_id DESC LIMIT 1")
-        boss = c.fetchone()
-        if boss:
-            boss = dict(boss)
-            boss['weakness'] = json.loads(boss['weakness']) if boss['weakness'] else []
-            boss['resist'] = json.loads(boss['resist']) if boss['resist'] else []
-            boss['participants'] = json.loads(boss['participants']) if boss['participants'] else []
-            
-            participants = boss['participants']
-            if participants:
-                placeholders = ','.join('?' * len(participants))
-                c_parts = conn.cursor()
-                c_parts.execute(f"SELECT class_levels, class, level FROM players WHERE id IN ({placeholders})", tuple(participants))
-                lvl_rows = c_parts.fetchall()
-                if lvl_rows:
-                    total_lvl = 0
-                    for r in lvl_rows:
-                        try:
-                            class_levels = json.loads(r.get('class_levels') or '{}')
-                        except:
-                            class_levels = {}
-                        cls_name = r.get('class', 'warrior').lower()
-                        lvl = class_levels.get(cls_name, {}).get('level', r.get('level', 1))
-                        total_lvl += lvl
-                    avg_lvl = total_lvl / len(lvl_rows)
+        try:
+            c = conn.cursor()
+            c.execute("SELECT * FROM bosses WHERE status = 'active' ORDER BY instance_id DESC LIMIT 1")
+            boss = c.fetchone()
+            if boss:
+                boss = dict(boss)
+                boss['weakness'] = json.loads(boss['weakness']) if boss['weakness'] else []
+                boss['resist'] = json.loads(boss['resist']) if boss['resist'] else []
+                boss['participants'] = json.loads(boss['participants']) if boss['participants'] else []
+                
+                participants = boss['participants']
+                if participants:
+                    placeholders = ','.join('?' * len(participants))
+                    c_parts = conn.cursor()
+                    c_parts.execute(f"SELECT class_levels, class, level FROM players WHERE id IN ({placeholders})", tuple(participants))
+                    lvl_rows = c_parts.fetchall()
+                    if lvl_rows:
+                        total_lvl = 0
+                        for r in lvl_rows:
+                            try:
+                                class_levels = json.loads(r.get('class_levels') or '{}')
+                            except Exception:
+                                class_levels = {}
+                            cls_name = r.get('class', 'warrior').lower()
+                            lvl = class_levels.get(cls_name, {}).get('level', r.get('level', 1))
+                            total_lvl += lvl
+                        avg_lvl = total_lvl / len(lvl_rows)
+                    else:
+                        avg_lvl = 1
                 else:
                     avg_lvl = 1
-            else:
-                avg_lvl = 1
-                
-            if avg_lvl <= 5:
-                boss['stars'] = 1
-            elif avg_lvl <= 15:
-                boss['stars'] = 2
-            elif avg_lvl <= 30:
-                boss['stars'] = 3
-            elif avg_lvl <= 50:
-                boss['stars'] = 4
-            else:
-                boss['stars'] = 5
-        conn.close()
+                    
+                if avg_lvl <= 5:
+                    boss['stars'] = 1
+                elif avg_lvl <= 15:
+                    boss['stars'] = 2
+                elif avg_lvl <= 30:
+                    boss['stars'] = 3
+                elif avg_lvl <= 50:
+                    boss['stars'] = 4
+                else:
+                    boss['stars'] = 5
+        finally:
+            conn.close()
         return boss
 
     def set_active_boss(self, boss_data):
@@ -670,107 +559,36 @@ class SQLiteDatabase:
             conn.commit()
             conn.close()
 
-    def buy_shop_item(self, username, item_name):
-        item_name = item_name.lower().strip()
-        
-        with self.lock:
-            conn = self.get_connection()
-            c = conn.cursor()
-            c.execute("SELECT id, gold, level, class, class_levels FROM players WHERE username = ?", (username.lower(),))
-            row = c.fetchone()
-            if not row:
-                conn.close()
-                return False, "You need to !register first."
-                
-            player = dict(row)
-            try:
-                class_levels = json.loads(player.get('class_levels') or '{}')
-                cls_name = player.get('class', 'warrior').lower()
-                lvl = class_levels.get(cls_name, {}).get('level', player.get('level', 1))
-            except:
-                lvl = player.get('level', 1)
-                
-            costs = {
-                "potion": 500,
-                "scroll_t1": 10000,
-                "scroll_t2": 50000,
-                "scroll_t3": 100000
-            }
-            
-            if item_name not in costs:
-                conn.close()
-                return False, "Item not found in shop. Available: Potion, scroll_t1, scroll_t2, scroll_t3"
-                
-            if item_name.startswith("scroll") and lvl < 11:
-                conn.close()
-                return False, "ใบกันแตกซื้อได้เมื่อเลเวล 11 ขึ้นไปครับ"
-            
-            cost = costs[item_name]
-            
-            if player["gold"] < cost:
-                conn.close()
-                return False, f"Not enough gold. Costs {cost}G, you have {player['gold']}G."
-                
-            new_gold = player["gold"] - cost
-            if item_name == "scroll_t1":
-                c.execute("UPDATE players SET gold = ?, scroll_t1 = scroll_t1 + 1 WHERE id = ?", (new_gold, player["id"]))
-                msg = f"Successfully bought 1 Basic Scroll! (Remaining Gold: {new_gold}G)"
-            elif item_name == "scroll_t2":
-                c.execute("UPDATE players SET gold = ?, scroll_t2 = scroll_t2 + 1 WHERE id = ?", (new_gold, player["id"]))
-                msg = f"Successfully bought 1 Blessed Scroll! (Remaining Gold: {new_gold}G)"
-            elif item_name == "scroll_t3":
-                c.execute("UPDATE players SET gold = ?, scroll_t3 = scroll_t3 + 1 WHERE id = ?", (new_gold, player["id"]))
-                msg = f"Successfully bought 1 Divine Scroll! (Remaining Gold: {new_gold}G)"
-            elif item_name == "potion":
-                full_p = self.get_player_by_id(player["id"])
-                from game.logic import calculate_player_stats
-                stats = calculate_player_stats(full_p)
-                new_hp = stats["max_hp"]
-                new_mp = stats["max_mp"]
-                c.execute("UPDATE players SET gold = ?, hp = ?, mp = ? WHERE id = ?", (new_gold, new_hp, new_mp, player["id"]))
-                msg = f"Successfully bought and consumed Potion! Restored to Max HP/MP! (Remaining Gold: {new_gold}G)"
-            
-            conn.commit()
-            conn.close()
-            return True, msg
+    # NOTE: buy_shop_item() has been moved to game/shop.py
 
     def get_player_equipment(self, player_id):
+        from game.helpers import find_item_data
         conn = self.get_connection()
-        c = conn.cursor()
-        c.execute("SELECT equipped_weapon, equipped_armor, equipped_accessory FROM players WHERE id = ?", (player_id,))
-        p = c.fetchone()
-        if not p:
-            conn.close()
-            return {}
-            
-        eq = {}
-        for slot in ['equipped_weapon', 'equipped_armor', 'equipped_accessory']:
-            item_db_id = p[slot]
-            if item_db_id:
-                c.execute("SELECT id, item_id, enhancement_level FROM items WHERE id = ?", (item_db_id,))
-                item = c.fetchone()
-                if item:
-                    item = dict(item)
-                    # Find user-friendly name from logic.ITEMS
-                    from game.logic import ITEMS
-                    item_id = item['item_id']
-                    name = item_id
-                    tier = "R"
-                    for cat in ITEMS.values():
-                        for tier_name, tier_items in cat.items():
-                            for itm in tier_items:
-                                if itm['id'] == item_id:
-                                    name = itm['name']
-                                    tier = tier_name
-                                    break
-                    item['name'] = name
-                    item['tier'] = tier
-                    eq[slot] = item
+        try:
+            c = conn.cursor()
+            c.execute("SELECT equipped_weapon, equipped_armor, equipped_accessory FROM players WHERE id = ?", (player_id,))
+            p = c.fetchone()
+            if not p:
+                return {}
+                
+            eq = {}
+            for slot in ['equipped_weapon', 'equipped_armor', 'equipped_accessory']:
+                item_db_id = p[slot]
+                if item_db_id:
+                    c.execute("SELECT id, item_id, enhancement_level FROM items WHERE id = ?", (item_db_id,))
+                    item = c.fetchone()
+                    if item:
+                        item = dict(item)
+                        item_data, tier = find_item_data(item['item_id'])
+                        item['name'] = item_data['name'] if item_data else item['item_id']
+                        item['tier'] = tier or 'R'
+                        eq[slot] = item
+                    else:
+                        eq[slot] = None
                 else:
                     eq[slot] = None
-            else:
-                eq[slot] = None
-        conn.close()
+        finally:
+            conn.close()
         return eq
 
     def get_active_challenge(self):
@@ -827,111 +645,7 @@ class SQLiteDatabase:
         conn.close()
         return [row['player_id'] for row in rows]
 
-    def sell_items(self, owner_id, target_item_name=None, target_tier=None):
-        import json
-        import os
-        items_path = os.path.join(os.path.dirname(__file__), 'data', 'items.json')
-        try:
-            with open(items_path, 'r', encoding='utf-8') as f:
-                ITEMS = json.load(f)
-        except:
-            ITEMS = {}
-            
-        with self.lock:
-            conn = self.get_connection()
-            c = conn.cursor()
-            
-            c.execute("SELECT equipped_weapon, equipped_armor, equipped_accessory FROM players WHERE id = ?", (owner_id,))
-            p_row = c.fetchone()
-            if not p_row:
-                conn.close()
-                return False, "Player not found."
-                
-            equipped_ids = [p_row['equipped_weapon'], p_row['equipped_armor'], p_row['equipped_accessory']]
-            equipped_ids = [eid for eid in equipped_ids if eid]
-            
-            base_prices = {"R": 100, "SR": 500, "SSR": 2500, "UR": 10000}
-            
-            c.execute("SELECT id, item_id, enhancement_level FROM items WHERE owner_id = ?", (owner_id,))
-            owned_items = c.fetchall()
-            
-            items_to_sell = []
-            
-            def get_item_data(i_id):
-                for cat in ITEMS.values():
-                    for t_items in cat.values():
-                        for itm in t_items:
-                            if itm['id'] == i_id:
-                                return itm
-                return None
-                
-            if target_item_name:
-                search_name = target_item_name.lower()
-                candidates = []
-                for row in owned_items:
-                    if row['id'] in equipped_ids: continue
-                    i_data = get_item_data(row['item_id'])
-                    if not i_data: continue
-                    
-                    if search_name == i_data['name'].lower() or search_name == str(row['id']):
-                        candidates.append((row, i_data))
-                        
-                if not candidates:
-                    conn.close()
-                    return False, f"ไม่พบไอเทม '{target_item_name}' ที่ยังไม่ได้สวมใส่ครับ (ถ้าใส่อยู่ต้องถอดก่อน)"
-                    
-                candidates.sort(key=lambda x: x[0]['enhancement_level'] or 0)
-                items_to_sell.append(candidates[0])
-                
-            elif target_tier:
-                target_t = target_tier.upper()
-                if target_t not in ['R', 'SR']:
-                    conn.close()
-                    return False, "ระบบอนุญาตให้ขายเหมาเฉพาะเกรด R และ SR เท่านั้นครับ เพื่อป้องกันการเผลอขายของแรร์ทิ้ง"
-                    
-                for row in owned_items:
-                    if row['id'] in equipped_ids: continue
-                    i_data = get_item_data(row['item_id'])
-                    if not i_data: continue
-                    
-                    if i_data.get('tier', 'R') == target_t:
-                        items_to_sell.append((row, i_data))
-                        
-                if not items_to_sell:
-                    conn.close()
-                    return False, f"ไม่พบไอเทมเกรด {target_t} ที่ไม่ได้สวมใส่ในตัวคุณครับ"
-                    
-            if not items_to_sell:
-                conn.close()
-                return False, "ไม่มีไอเทมที่สามารถขายได้"
-                
-            total_gold = 0
-            ids_to_delete = []
-            
-            for row, i_data in items_to_sell:
-                tier = i_data.get('tier', 'R')
-                base_price = base_prices.get(tier, 100)
-                enh_lvl = row['enhancement_level'] or 0
-                price = int(base_price * (1 + (enh_lvl * 0.5)))
-                
-                total_gold += price
-                ids_to_delete.append(row['id'])
-                
-            placeholders = ','.join('?' * len(ids_to_delete))
-            c.execute(f"DELETE FROM items WHERE id IN ({placeholders})", tuple(ids_to_delete))
-            c.execute("UPDATE players SET gold = gold + ? WHERE id = ?", (total_gold, owner_id))
-            
-            conn.commit()
-            conn.close()
-            
-            count = len(items_to_sell)
-            if target_item_name:
-                item_name = items_to_sell[0][1]['name']
-                enh = items_to_sell[0][0]['enhancement_level'] or 0
-                enh_str = f"+{enh} " if enh > 0 else ""
-                return True, f"ขาย {enh_str}{item_name} สำเร็จ! ได้รับเงิน {total_gold} Gold 💰"
-            else:
-                return True, f"ขายเหมาไอเทมเกรด {target_tier.upper()} จำนวน {count} ชิ้น สำเร็จ! ได้รับเงินทั้งหมด {total_gold} Gold 💰"
+    # NOTE: sell_items() has been moved to game/shop.py
 
 db = SQLiteDatabase()
 
