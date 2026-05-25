@@ -17,6 +17,16 @@ from bot import run_bot
 
 def main():
     print("Starting Twitch RPG Bot Services...")
+
+    # Register helper callbacks to break circular imports
+    try:
+        from database import db
+        from game.helpers import find_item_data
+        from game.logic import calculate_player_stats, get_required_exp
+        db.register_helpers(find_item_data, calculate_player_stats, get_required_exp)
+        print("[DB] Injected helper callbacks successfully.")
+    except Exception as e:
+        print(f"[DB Error] Failed to register dynamic helpers: {e}")
     
     # Start Flask API in a separate daemon thread
     flask_thread = threading.Thread(target=run_flask_api, daemon=True)

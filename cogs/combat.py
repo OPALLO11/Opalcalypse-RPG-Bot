@@ -1,6 +1,7 @@
-from twitchio.ext import commands
+import os
 import asyncio
 from database import db
+from twitchio.ext import commands
 from game.combat import process_action, get_party_data
 from game.boss_manager import boss_manager
 from utils import emit_to_overlay
@@ -81,50 +82,46 @@ class CombatCog(commands.Cog):
                 gold_text_list = []
                 gold_rewards_detail = []
                 
-                conn = db.get_connection()
-                try:
-                    # Parse gold rewards
-                    if gold_rewards:
-                        for p_id, amount in gold_rewards.items():
-                            p_info = conn.execute("SELECT username, character_name FROM players WHERE id = ?", (p_id,)).fetchone()
-                            if p_info:
-                                p_name = p_info['username']
-                                p_char = p_info['character_name'] or p_name
-                                gold_text_list.append(f"@{p_name} ได้ {amount:,}G")
-                                gold_rewards_detail.append({
-                                    'player_id': p_id,
-                                    'username': p_name,
-                                    'character_name': p_char,
-                                    'amount': amount
-                                })
+                # Parse gold rewards
+                if gold_rewards:
+                    for p_id, amount in gold_rewards.items():
+                        p_info = db.players.get_player_basic(p_id, "username, character_name")
+                        if p_info:
+                            p_name = p_info['username']
+                            p_char = p_info['character_name'] or p_name
+                            gold_text_list.append(f"@{p_name} ได้ {amount:,}G")
+                            gold_rewards_detail.append({
+                                'player_id': p_id,
+                                'username': p_name,
+                                'character_name': p_char,
+                                'amount': amount
+                            })
 
-                    # Parse loot
-                    if loot_data:
-                        for player_id, item_doc in loot_data.items():
-                            p_info = conn.execute("SELECT username FROM players WHERE id = ?", (player_id,)).fetchone()
-                            if p_info:
-                                p_name = p_info['username']
-                                item_name = item_doc.get('item_name', 'Unknown Item')
-                                tier = item_doc.get('tier', '')
-                                full_name = f"[{tier}] {item_name}" if tier else item_name
-                                
-                                act = item_doc.get('action', 'new')
-                                if act == 'new':
-                                    drops_text.append(f"@{p_name} ได้ของใหม่: {full_name}")
-                                elif act == 'enhanced':
-                                    new_lvl = item_doc.get('new_level', 1)
-                                    drops_text.append(f"@{p_name} อัปเกรดสำเร็จ! {full_name} เป็น +{new_lvl}")
-                                elif act == 'failed_protected':
-                                    drops_text.append(f"@{p_name} อัปเกรดล้มเหลว! แต่ใบกันแตกป้องกันไม่ให้ของพัง!")
-                                elif act == 'broke':
-                                    drops_text.append(f"@{p_name} 💥บวกแตก! {full_name} หายไปในอากาศ!")
-                                elif act == 'converted_exp':
-                                    amt = item_doc.get('amount', 500)
-                                    drops_text.append(f"@{p_name} ของล้น! {full_name} ย่อยเป็น {amt} EXP")
-                                else:
-                                    drops_text.append(f"@{p_name} got {full_name}")
-                finally:
-                    conn.close()
+                # Parse loot
+                if loot_data:
+                    for player_id, item_doc in loot_data.items():
+                        p_info = db.players.get_player_basic(player_id, "username")
+                        if p_info:
+                            p_name = p_info['username']
+                            item_name = item_doc.get('item_name', 'Unknown Item')
+                            tier = item_doc.get('tier', '')
+                            full_name = f"[{tier}] {item_name}" if tier else item_name
+                            
+                            act = item_doc.get('action', 'new')
+                            if act == 'new':
+                                drops_text.append(f"@{p_name} ได้ของใหม่: {full_name}")
+                            elif act == 'enhanced':
+                                new_lvl = item_doc.get('new_level', 1)
+                                drops_text.append(f"@{p_name} อัปเกรดสำเร็จ! {full_name} เป็น +{new_lvl}")
+                            elif act == 'failed_protected':
+                                drops_text.append(f"@{p_name} อัปเกรดล้มเหลว! แต่ใบกันแตกป้องกันไม่ให้ของพัง!")
+                            elif act == 'broke':
+                                drops_text.append(f"@{p_name} 💥บวกแตก! {full_name} หายไปในอากาศ!")
+                            elif act == 'converted_exp':
+                                amt = item_doc.get('amount', 500)
+                                drops_text.append(f"@{p_name} ของล้น! {full_name} ย่อยเป็น {amt} EXP")
+                            else:
+                                drops_text.append(f"@{p_name} got {full_name}")
 
                 emit_to_overlay('boss_defeated', {
                     'winner': username,
@@ -174,8 +171,8 @@ class CombatCog(commands.Cog):
 
     @commands.command(name='spawn', aliases=['sp', 'spwn'])
     async def cmd_spawn(self, ctx: commands.Context, type_arg: str = 'normal'):
-        import os
         if not ctx.author.is_mod and ctx.author.name.lower() != os.environ.get('TWITCH_CHANNEL', '').lower():
+            await ctx.send(f"@{ctx.author.name} ❌ You are not allowed to use this command!")
             return
             
         boss = boss_manager.spawn_boss(1, boss_type=type_arg.lower())
@@ -188,8 +185,8 @@ class CombatCog(commands.Cog):
 
     @commands.command(name='resetchallenge')
     async def cmd_resetchallenge(self, ctx: commands.Context):
-        import os
         if not ctx.author.is_mod and ctx.author.name.lower() != os.environ.get('TWITCH_CHANNEL', '').lower():
+            await ctx.send(f"@{ctx.author.name} ❌ You are not allowed to use this command!")
             return
             
         from game.challenge_manager import spawn_challenge

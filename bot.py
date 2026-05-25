@@ -187,6 +187,7 @@ COMMAND_REGISTRY = {
     'equipment':  {'cog': 'info',   'method': 'cmd_inspect',   'args': ('first', 'target_name')},
     'equipments': {'cog': 'info',   'method': 'cmd_inspect',   'args': ('first', 'target_name')},
     'ins':        {'cog': 'info',   'method': 'cmd_inspect',   'args': ('first', 'target_name')},
+    'reload':     {'cog': 'info',   'method': 'cmd_reload'},
 }
 
 
@@ -256,14 +257,14 @@ async def regen_loop():
         try:
             await asyncio.sleep(60)
             now = datetime.datetime.now()
-            conn = db.get_connection()
-            c = conn.cursor()
-            c.execute("SELECT * FROM players")
-            players = c.fetchall()
-            
-            changed = False
-            for row in players:
-                player = dict(row)
+
+            # Use repository to get all players (hydrated)
+            players = db.players.get_all_players()
+
+            updates_to_apply = []
+            for player in players:
+                if not player:
+                    continue
                 pid = player['id']
                 stats = calculate_player_stats(player)
                 
@@ -272,19 +273,20 @@ async def regen_loop():
                 current_hp = player.get('hp', 0)
                 current_mp = player.get('mp', 0)
                 
+                player_updates = {}
+                
                 # Cap HP and MP if they exceed max
-                if current_hp > max_hp or current_mp > max_mp:
-                    current_hp = min(current_hp, max_hp)
-                    current_mp = min(current_mp, max_mp)
-                    c.execute("UPDATE players SET hp = ?, mp = ? WHERE id = ?", (current_hp, current_mp, pid))
-                    changed = True
+                if current_hp > max_hp:
+                    current_hp = max_hp
+                    player_updates['hp'] = current_hp
+                if current_mp > max_mp:
+                    current_mp = max_mp
+                    player_updates['mp'] = current_mp
                 
                 # MP Regen (all players)
-                new_mp = current_mp
                 if current_mp < max_mp:
                     new_mp = min(current_mp + 10, max_mp)
-                    c.execute("UPDATE players SET mp = ? WHERE id = ?", (new_mp, pid))
-                    changed = True
+                    player_updates['mp'] = new_mp
                     
                 # HP Regen (active, alive players)
                 alive, _ = check_cooldown(pid, 'respawn')
@@ -295,11 +297,14 @@ async def regen_loop():
                     if current_hp < max_hp:
                         regen_amount = max(5, int(max_hp * 0.02))
                         new_hp = min(current_hp + regen_amount, max_hp)
-                        c.execute("UPDATE players SET hp = ? WHERE id = ?", (new_hp, pid))
-                        changed = True
-                        
-            conn.commit()
-            conn.close()
+                        player_updates['hp'] = new_hp
+
+                if player_updates:
+                    updates_to_apply.append((pid, player_updates))
+
+            # Batch-write all player updates in a single transaction
+            if updates_to_apply:
+                db.players.batch_regen_update(updates_to_apply)
             
             boss = boss_manager.get_current_boss()
             if boss:
@@ -310,7 +315,6 @@ async def regen_loop():
                         db.update_boss(boss['instance_id'], {'current_hp': boss['max_hp']})
                         del state['wipe_time']
                         boss['current_hp'] = boss['max_hp']
-                        changed = True
                         emit_to_overlay('combat_event', {
                             'username': '💀 System',
                             'action': f'The party was wiped for 3 minutes. {boss["name"]} has fully recovered!',
@@ -318,7 +322,7 @@ async def regen_loop():
                             'boss_hp': boss['max_hp']
                         })
             
-            if changed and boss:
+            if updates_to_apply and boss:
                 emit_to_overlay('party_update', get_party_data(boss))
         except Exception as e:
             print(f"Error in regen_loop: {e}")

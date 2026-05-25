@@ -123,10 +123,8 @@ class TestStreamChallenges(unittest.TestCase):
         # P2 registers a hit
         log_combat(boss['instance_id'], self.p2['id'], "Fireball", 150, True)
         
-        # Give combat log worker a moment to process the batch queue if running asynchronously
-        # But in test environment we might want to manually flush, or we can just write directly since combat_log uses batching worker thread.
-        # Wait, since combat log worker runs in a separate thread every 1s, let's wait 1.2s to ensure the log is committed.
-        time.sleep(1.2)
+        # Flush combat log batch queue directly
+        db.combat_logs.flush()
         
         # Now track crits to trigger completion (Target is 2, let's add 2)
         track_progress("crits", 2)
