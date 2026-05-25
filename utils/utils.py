@@ -43,8 +43,56 @@ def write_obs_boss_files(boss_name, current_hp, max_hp):
     except Exception as e:
         print(f"Error writing OBS boss text files: {e}")
 
+_bot_instance = None
+_loop_instance = None
+
+def set_bot(bot, loop):
+    global _bot_instance, _loop_instance
+    _bot_instance = bot
+    _loop_instance = loop
+
 def send_streamerbot_message(message):
-    """Send message to Twitch chat using Streamer.bot HTTP API (Method 2 for Broadcaster message)"""
+    """Send message to Twitch chat using RPGBot if active; fallback to Streamer.bot HTTP API"""
+    global _bot_instance, _loop_instance
+    
+    if _bot_instance and _loop_instance:
+        config = load_config()
+        twitch_config = config.get('twitch', {})
+        channel_name = twitch_config.get('channel') or os.environ.get('TWITCH_CHANNEL') or 'opallo11'
+        
+        async def _send():
+            try:
+                from game.helpers import split_message
+                messages = split_message(message, max_len=400)
+                
+                channel = _bot_instance.get_channel(channel_name)
+                if channel:
+                    for msg in messages:
+                        await channel.send(msg)
+                    return True
+                else:
+                    print(f"[TwitchIO Send Error] Bot has not joined channel: {channel_name}")
+                    return False
+            except Exception as ex:
+                print(f"[TwitchIO Send Exception] {ex}")
+                return False
+                
+        import asyncio
+        try:
+            try:
+                current_loop = asyncio.get_running_loop()
+            except RuntimeError:
+                current_loop = None
+                
+            if current_loop == _loop_instance:
+                _loop_instance.create_task(_send())
+            else:
+                asyncio.run_coroutine_threadsafe(_send(), _loop_instance)
+            return True
+        except Exception as e:
+            print(f"Error scheduling native Twitch message: {e}")
+            
+    # Original Streamer.bot fallback
     config = load_config()
     sb_config = config.get('streamerbot', {})
     if not sb_config.get('enabled', False):
