@@ -2,7 +2,7 @@ import sqlite3
 import os
 
 db_folder = r"E:\_Live Streaming Work\OPALLO11 - Live Streaming\All Program\Streamerbot\data"
-db_files = [f for f in os.listdir(db_folder) if f.endswith('.db')]
+db_files = [f for f in os.listdir(db_folder) if f.endswith('.db')] if os.path.exists(db_folder) else []
 
 for db_file in db_files:
     path = os.path.join(db_folder, db_file)

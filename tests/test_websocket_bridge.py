@@ -14,8 +14,9 @@ if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 # Patch utils.load_config to configure the bot for Server Integration testing
+import utils.utils
 import utils
-original_load_config = utils.load_config
+original_load_config = utils.utils.load_config
 def patched_load_config():
     cfg = original_load_config()
     if 'streamerbot' in cfg:
@@ -24,6 +25,7 @@ def patched_load_config():
         cfg['streamerbot']['python_ws_port'] = 6789
         cfg['streamerbot']['http_url'] = 'http://127.0.0.1:8075/DoAction'
     return cfg
+utils.utils.load_config = patched_load_config
 utils.load_config = patched_load_config
 
 captured_responses = []
