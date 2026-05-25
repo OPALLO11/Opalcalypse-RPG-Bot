@@ -1,0 +1,478 @@
+{
+    "weapons": {
+        "R": [
+            {
+                "id": "w_r_1",
+                "name": "Iron Sword",
+                "tier": "R",
+                "type": "weapon",
+                "atk": 120,
+                "def": 0,
+                "drop_weight": 50
+            },
+            {
+                "id": "w_r_2",
+                "name": "Wooden Staff",
+                "tier": "R",
+                "type": "weapon",
+                "atk": 100,
+                "mp_bonus": 20,
+                "drop_weight": 50
+            },
+            {
+                "id": "w_r_3",
+                "name": "Rusty Dagger",
+                "tier": "R",
+                "type": "weapon",
+                "atk": 110,
+                "crit_rate": 5,
+                "drop_weight": 50
+            },
+            {
+                "id": "w_r_4",
+                "name": "Training Bow",
+                "tier": "R",
+                "type": "weapon",
+                "atk": 90,
+                "crit_rate": 3,
+                "drop_weight": 50
+            },
+            {
+                "id": "w_r_5",
+                "name": "Holy Mace",
+                "tier": "R",
+                "type": "weapon",
+                "atk": 95,
+                "hp_bonus": 50,
+                "drop_weight": 50
+            },
+            {
+                "id": "w_r_6",
+                "name": "Goblin Crossbow",
+                "tier": "R",
+                "type": "weapon",
+                "atk": 105,
+                "crit_rate": 4,
+                "drop_weight": 50
+            }
+        ],
+        "SR": [
+            {
+                "id": "w_sr_1",
+                "name": "Knight's Blade",
+                "tier": "SR",
+                "type": "weapon",
+                "atk": 280,
+                "crit_rate": 10,
+                "drop_weight": 30
+            },
+            {
+                "id": "w_sr_2",
+                "name": "Apprentice Wand",
+                "tier": "SR",
+                "type": "weapon",
+                "atk": 250,
+                "mp_bonus": 50,
+                "element": "fire",
+                "drop_weight": 30
+            },
+            {
+                "id": "w_sr_3",
+                "name": "Assassin's Dirk",
+                "tier": "SR",
+                "type": "weapon",
+                "atk": 260,
+                "crit_rate": 15,
+                "drop_weight": 30
+            },
+            {
+                "id": "w_sr_4",
+                "name": "Wood Elf Ranger Bow",
+                "tier": "SR",
+                "type": "weapon",
+                "atk": 220,
+                "crit_rate": 12,
+                "element": "nature",
+                "drop_weight": 30
+            },
+            {
+                "id": "w_sr_5",
+                "name": "Cleric Scepter",
+                "tier": "SR",
+                "type": "weapon",
+                "atk": 180,
+                "hp_bonus": 200,
+                "mp_bonus": 30,
+                "drop_weight": 30
+            },
+            {
+                "id": "w_sr_6",
+                "name": "High elf Bow",
+                "tier": "SR",
+                "type": "weapon",
+                "atk": 230,
+                "crit_rate": 14,
+                "drop_weight": 30
+            },
+            {
+                "id": "w_sr_7",
+                "name": "Verdant Guardian Blade",
+                "tier": "SR",
+                "type": "weapon",
+                "atk": 270,
+                "crit_rate": 8,
+                "element": "nature",
+                "drop_weight": 30
+            },
+            {
+                "id": "w_sr_8",
+                "name": "Sea Serpent Trident",
+                "tier": "SR",
+                "type": "weapon",
+                "atk": 265,
+                "crit_rate": 10,
+                "element": "water",
+                "drop_weight": 30
+            }
+        ],
+        "SSR": [
+            {
+                "id": "w_ssr_1",
+                "name": "Dragonslayer Greatsword",
+                "tier": "SSR",
+                "type": "weapon",
+                "atk": 450,
+                "crit_rate": 15,
+                "element": "fire",
+                "special_effect": "Fire DMG +20%",
+                "drop_weight": 10
+            },
+            {
+                "id": "w_ssr_2",
+                "name": "Staff of the Archmagus",
+                "tier": "SSR",
+                "type": "weapon",
+                "atk": 420,
+                "mp_bonus": 100,
+                "element": "light",
+                "special_effect": "MP Regen x1.5",
+                "drop_weight": 10
+            },
+            {
+                "id": "w_ssr_3",
+                "name": "Shadowfang",
+                "tier": "SSR",
+                "type": "weapon",
+                "atk": 430,
+                "crit_rate": 25,
+                "element": "dark",
+                "special_effect": "Crit DMG +50%",
+                "drop_weight": 10
+            },
+            {
+                "id": "w_ssr_4",
+                "name": "Skyward Harp",
+                "tier": "SSR",
+                "type": "weapon",
+                "atk": 390,
+                "crit_rate": 20,
+                "element": "thunder",
+                "special_effect": "Thunder DMG +20%",
+                "drop_weight": 10
+            },
+            {
+                "id": "w_ssr_5",
+                "name": "Caduceus Staff",
+                "tier": "SSR",
+                "type": "weapon",
+                "atk": 300,
+                "hp_bonus": 500,
+                "mp_bonus": 150,
+                "element": "light",
+                "special_effect": "Healing +30%",
+                "drop_weight": 10
+            },
+            {
+                "id": "w_ssr_6",
+                "name": "Tidal Surge Spear",
+                "tier": "SSR",
+                "type": "weapon",
+                "atk": 440,
+                "crit_rate": 12,
+                "element": "water",
+                "special_effect": "Water DMG +20%",
+                "drop_weight": 10
+            }
+        ],
+        "UR": [
+            {
+                "id": "w_ur_1",
+                "name": "ดาบสลักวิญญาณทมิฬกลืนกินแสงดารา",
+                "tier": "UR",
+                "type": "weapon",
+                "atk": 850,
+                "crit_rate": 20,
+                "element": "dark",
+                "custom_chat_format": "ปลดปล่อยจิตวิญญาณทมิฬกลืนกินดวงดารา! 「{player}」ฟาดฟันบอส {boss} ดาเมจทะลุขีดจำกัด {damage}!",
+                "drop_weight": 5
+            },
+            {
+                "id": "w_ur_2",
+                "name": "กริชโลหิตจันทราคร่ำครวญ",
+                "tier": "UR",
+                "type": "weapon",
+                "atk": 780,
+                "crit_rate": 30,
+                "element": "dark",
+                "custom_chat_format": "ค่ำคืนนี้จันทราจะนองเลือด... กริชโลหิตกรีดเฉือนเงามืด! 「{player}」แทงบอส {boss} รวดเดียว {damage} ดาเมจ!",
+                "drop_weight": 5
+            },
+            {
+                "id": "w_ur_3",
+                "name": "เคียวเกี่ยววิญญาณราตรีไร้จุดจบ",
+                "tier": "UR",
+                "type": "weapon",
+                "atk": 820,
+                "crit_rate": 15,
+                "element": "dark",
+                "custom_chat_format": "ความมืดนิรันดร์จะพรากวิญญาณของเจ้าไป! 「{player}」กวัดแกว่งเคียวเกี่ยววิญญาณฟัน {boss} เป็นเงิน {damage} ดาเมจ!",
+                "drop_weight": 5
+            },
+            {
+                "id": "w_ur_4",
+                "name": "ปืนพกทลายตรรกะแห่งมิติ",
+                "tier": "UR",
+                "type": "weapon",
+                "atk": 800,
+                "crit_rate": 25,
+                "element": "chaos",
+                "custom_chat_format": "มิติแห่งนี้กำลังจะล่มสลาย... ปล่อยกระสุนทะลวงตรรกะมิติ! 「{player}」ระเบิดพลังใส่บอส {boss} แรงกระแทก {damage}!",
+                "drop_weight": 5
+            },
+            {
+                "id": "w_ur_5",
+                "name": "คทาพิพากษาผู้สังหารพระเจ้า",
+                "tier": "UR",
+                "type": "weapon",
+                "atk": 750,
+                "mp_bonus": 250,
+                "element": "light",
+                "custom_chat_format": "แม้แต่ทวยเทพก็มิอาจหลีกเลี่ยงการพิพากษานี้ได้! 「{player}」ร่ายมหาเวทสังหารพระเจ้าใส่บอส {boss} รุนแรง {damage}!",
+                "drop_weight": 5
+            },
+            {
+                "id": "w_ur_6",
+                "name": "ธนูรำพันบาปแห่งเหมันต์นิรันดร์",
+                "tier": "UR",
+                "type": "weapon",
+                "atk": 790,
+                "crit_rate": 22,
+                "element": "ice",
+                "custom_chat_format": "ความหนาวเย็นแห่งบาปจะแช่แข็งทุกสิ่ง... 「{player}」ยิงศรเหมันต์ปักอกบอส {boss} ดาเมจเยือกแข็ง {damage}!",
+                "drop_weight": 5
+            },
+            {
+                "id": "w_ur_7",
+                "name": "สายยางฉีดน้ำแรงดันสูง",
+                "tier": "UR",
+                "type": "weapon",
+                "atk": 800,
+                "mp_bonus": 100,
+                "element": "water",
+                "custom_chat_format": "ฉีดน้ำแรงดันสูงจนบอสถึงกับเปียกปอนลื่นล้ม! 「{player}」กวัดแกว่งสายยางไล่ฉีดบอส {boss} ไปถึง {damage} ดาเมจ!",
+                "drop_weight": 5
+            },
+            {
+                "id": "w_ur_8",
+                "name": "ก้านมะยมศักดิ์สิทธิ์",
+                "tier": "UR",
+                "type": "weapon",
+                "atk": 830,
+                "crit_rate": 15,
+                "element": "nature",
+                "custom_chat_format": "หยิบก้านมะยมในตำนานมาฟาดด้วยความเร็วแสงจนบอสหลังลาย! 「{player}」กระหน่ำตีบอส {boss} รวดเดียว {damage} ดาเมจ!",
+                "drop_weight": 5
+            }
+        ]
+    },
+    "armors": {
+        "R": [
+            {
+                "id": "a_r_1",
+                "name": "Leather Tunic",
+                "tier": "R",
+                "type": "armor",
+                "def": 50,
+                "hp_bonus": 100,
+                "drop_weight": 50
+            },
+            {
+                "id": "a_r_2",
+                "name": "Cloth Robe",
+                "tier": "R",
+                "type": "armor",
+                "def": 30,
+                "mp_bonus": 30,
+                "drop_weight": 50
+            },
+            {
+                "id": "a_r_3",
+                "name": "Oak Bark Shield",
+                "tier": "R",
+                "type": "armor",
+                "def": 45,
+                "hp_bonus": 120,
+                "element": "nature",
+                "drop_weight": 50
+            }
+        ],
+        "SR": [
+            {
+                "id": "a_sr_1",
+                "name": "Mithril Chainmail",
+                "tier": "SR",
+                "type": "armor",
+                "def": 120,
+                "hp_bonus": 300,
+                "drop_weight": 30
+            },
+            {
+                "id": "a_sr_2",
+                "name": "Guardian Scale",
+                "tier": "SR",
+                "type": "armor",
+                "def": 100,
+                "hp_bonus": 250,
+                "drop_weight": 30
+            },
+            {
+                "id": "a_sr_3",
+                "name": "Sorcerer Vestments",
+                "tier": "SR",
+                "type": "armor",
+                "def": 70,
+                "mp_bonus": 100,
+                "hp_bonus": 150,
+                "drop_weight": 30
+            }
+        ],
+        "SSR": [
+            {
+                "id": "a_ssr_1",
+                "name": "Aegis Plate",
+                "tier": "SSR",
+                "type": "armor",
+                "def": 250,
+                "hp_bonus": 800,
+                "special_effect": "Damage Taken -10%",
+                "drop_weight": 10
+            },
+            {
+                "id": "a_ssr_2",
+                "name": "Divine Robe",
+                "tier": "SSR",
+                "type": "armor",
+                "def": 150,
+                "hp_bonus": 600,
+                "mp_bonus": 200,
+                "special_effect": "Damage Taken -5%, MP +200",
+                "drop_weight": 10
+            }
+        ]
+    },
+    "accessories": {
+        "R": [
+            {
+                "id": "ac_r_1",
+                "name": "Copper Ring",
+                "tier": "R",
+                "type": "accessory",
+                "hp_bonus": 50,
+                "atk": 10,
+                "drop_weight": 50
+            },
+            {
+                "id": "ac_r_2",
+                "name": "Gemstone Earrings",
+                "tier": "R",
+                "type": "accessory",
+                "mp_bonus": 20,
+                "drop_weight": 50
+            }
+        ],
+        "SR": [
+            {
+                "id": "ac_sr_1",
+                "name": "Silver Amulet",
+                "tier": "SR",
+                "type": "accessory",
+                "hp_bonus": 150,
+                "mp_bonus": 50,
+                "drop_weight": 30
+            },
+            {
+                "id": "ac_sr_2",
+                "name": "Gold Bracelets",
+                "tier": "SR",
+                "type": "accessory",
+                "hp_bonus": 100,
+                "atk": 40,
+                "drop_weight": 30
+            }
+        ],
+        "SSR": [
+            {
+                "id": "ac_ssr_1",
+                "name": "Ring of Power",
+                "tier": "SSR",
+                "type": "accessory",
+                "atk": 100,
+                "crit_rate": 10,
+                "special_effect": "All Stats +10%",
+                "drop_weight": 10
+            },
+            {
+                "id": "ac_ssr_2",
+                "name": "Heart of the Mountain",
+                "tier": "SSR",
+                "type": "accessory",
+                "def": 80,
+                "hp_bonus": 500,
+                "special_effect": "DEF +80, HP +500",
+                "drop_weight": 10
+            },
+            {
+                "id": "ac_ssr_3",
+                "name": "Chronos Pocketwatch",
+                "tier": "SSR",
+                "type": "accessory",
+                "mp_bonus": 80,
+                "crit_rate": 8,
+                "special_effect": "Crit Rate +8%, MP +80",
+                "drop_weight": 10
+            }
+        ],
+        "UR": [
+            {
+                "id": "ac_ur_1",
+                "name": "แหวนผนึกพลังมาร",
+                "tier": "UR",
+                "type": "accessory",
+                "atk": 200,
+                "crit_rate": 15,
+                "hp_bonus": 800,
+                "drop_weight": 5
+            },
+            {
+                "id": "ac_ur_2",
+                "name": "ถุงมือเพลิงทัณฑ์ชำระล้างปรโลก",
+                "tier": "UR",
+                "type": "accessory",
+                "def": 150,
+                "hp_bonus": 1000,
+                "element": "fire",
+                "drop_weight": 5
+            }
+        ]
+    }
+}
