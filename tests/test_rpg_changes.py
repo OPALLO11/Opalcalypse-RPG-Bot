@@ -117,9 +117,8 @@ class TestRPGChanges(unittest.TestCase):
         self.assertEqual(boss_after['current_hp'], boss_before['current_hp'])
         self.assertEqual(res_heal['damage'], 0)
         
-        # Wait a bit and check if LogBatchProcessor writes combat log
-        import time
-        time.sleep(1.5)
+        # Flush combat log batch queue directly
+        db.combat_logs.flush()
         
         p_healed = db.get_player("test_user_priest")
         self.assertTrue(p_healed['hp'] > 50)
@@ -146,8 +145,8 @@ class TestRPGChanges(unittest.TestCase):
         self.assertTrue(res_kill['success'])
         self.assertTrue(res_kill['is_dead'])
 
-        # Now wait for the logger queue to be fully flushed to db before querying rankings
-        time.sleep(1.5)
+        # Flush combat log batch queue directly
+        db.combat_logs.flush()
 
         # Confirm rankings are retrieved
         rankings = db.get_boss_rankings(boss['instance_id'])
