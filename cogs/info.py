@@ -124,11 +124,8 @@ class InfoCog(commands.Cog):
             await ctx.send(f"@{ctx.author.name} Please !register first.")
             return
 
-        conn = db.get_connection()
-        c = conn.cursor()
-        c.execute("SELECT id, item_id, enhancement_level FROM items WHERE owner_id = ?", (player['id'],))
-        items = c.fetchall()
-        conn.close()
+        # Get items via repository
+        items = db.items.get_items_by_owner(player['id'])
 
         if not items:
             await ctx.send(f"@{ctx.author.name} Your inventory is empty.")
@@ -167,11 +164,8 @@ class InfoCog(commands.Cog):
         player = db.get_player(ctx.author.name)
         if not player: return
 
-        conn = db.get_connection()
-        c = conn.cursor()
-        c.execute("SELECT id, item_id FROM items WHERE owner_id = ?", (player['id'],))
-        db_items = c.fetchall()
-        conn.close()
+        # Get items via repository
+        db_items = db.items.get_items_by_owner(player['id'])
 
         if not db_items:
             await ctx.send(f"@{ctx.author.name} Your inventory is empty.")
@@ -212,13 +206,9 @@ class InfoCog(commands.Cog):
         if slot:
             # Check level requirement before equipping
             enh_lvl = 0
-            conn = db.get_connection()
-            try:
-                row = conn.execute("SELECT enhancement_level FROM items WHERE id = ?", (target_db_id,)).fetchone()
-                if row:
-                    enh_lvl = row['enhancement_level'] or 0
-            finally:
-                conn.close()
+            item_row = db.items.get_item_by_db_id(target_db_id)
+            if item_row:
+                enh_lvl = item_row.get('enhancement_level') or 0
                 
             item_data, item_tier = find_item_data(target_item_id)
             if not item_tier:
@@ -444,6 +434,71 @@ class InfoCog(commands.Cog):
               "💖 Priest: สายซัพพอร์ต มีสกิลฟื้นฟูเลือดและชุบชีวิตเพื่อนร่วมทีม"
         if not send_streamerbot_message(msg):
             await ctx.send(msg)
+
+    @commands.command(name='reload')
+    async def cmd_reload(self, ctx: commands.Context):
+        import os
+        author_name = ctx.author.name
+        is_mod = getattr(ctx.author, 'is_mod', False)
+        channel_owner = os.environ.get('TWITCH_CHANNEL', '').lower()
+        if not is_mod and author_name.lower() != channel_owner:
+            await ctx.send(f"@{author_name} ❌ You are not allowed to use this command!")
+            return
+
+        try:
+            import sys
+            import importlib
+            
+            # List of modules to reload in dependency order
+            modules_to_reload = [
+                'utils.utils',
+                'utils',
+                'game.items',
+                'game.helpers',
+                'game.logic',
+                'game.enhancement',
+                'game.boss_manager',
+                'game.challenge_manager',
+                'game.combat',
+                'cogs.combat',
+                'cogs.info'
+            ]
+            
+            # Reload modules in order if they are already imported
+            for mod_name in modules_to_reload:
+                if mod_name in sys.modules:
+                    importlib.reload(sys.modules[mod_name])
+            
+            # Import cogs again from fresh reloaded modules
+            import cogs.combat
+            import cogs.info
+            
+            # 1. Native TwitchIO Bot mode reload handling
+            if self.bot:
+                self.bot.remove_cog("CombatCog")
+                self.bot.remove_cog("InfoCog")
+                
+                self.bot.add_cog(cogs.combat.CombatCog(self.bot))
+                self.bot.add_cog(cogs.info.InfoCog(self.bot))
+                
+                # Update globals in bot module
+                bot_mod = sys.modules.get('bot')
+                if bot_mod:
+                    bot_mod.combat_cog = self.bot.get_cog("CombatCog")
+                    bot_mod.info_cog = self.bot.get_cog("InfoCog")
+            else:
+                # 2. Local WS Server mode reload handling
+                bot_mod = sys.modules.get('bot')
+                if bot_mod:
+                    bot_mod.combat_cog = cogs.combat.CombatCog(None)
+                    bot_mod.info_cog = cogs.info.InfoCog(None)
+
+            await ctx.send("🔄 Cogs and game rules successfully reloaded!")
+            print("[Bot] Cogs and game rules successfully reloaded!")
+        except Exception as e:
+            await ctx.send(f"❌ Failed to reload cogs: {e}")
+            import traceback
+            traceback.print_exc()
 
 def prepare(bot: commands.Bot):
     bot.add_cog(InfoCog(bot))

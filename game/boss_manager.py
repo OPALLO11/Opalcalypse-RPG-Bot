@@ -3,9 +3,19 @@ import datetime
 from .logic import BOSSES, calculate_boss_hp
 from database import db
 
+# Preserve boss_state across module reloads
+_old_boss_manager = None
+import sys
+if 'game.boss_manager' in sys.modules:
+    _old_bm_mod = sys.modules['game.boss_manager']
+    if hasattr(_old_bm_mod, 'boss_manager'):
+        _old_boss_manager = _old_bm_mod.boss_manager
+
 class BossManager:
     def __init__(self):
         self.boss_state = {}
+        if _old_boss_manager is not None:
+            self.boss_state = _old_boss_manager.boss_state
 
         
     def spawn_boss(self, active_players_count, boss_type='normal'):

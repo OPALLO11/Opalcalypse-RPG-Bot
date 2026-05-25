@@ -1,8 +1,11 @@
 import os
 import requests
 import json
+import concurrent.futures
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config.json')
+
+_http_executor = concurrent.futures.ThreadPoolExecutor(max_workers=4, thread_name_prefix="HTTPExecutor")
 
 def load_config():
     try:
@@ -13,15 +16,17 @@ def load_config():
         return {}
 
 def emit_to_overlay(event_name, data):
-    try:
-        host = os.environ.get('FLASK_HOST', '127.0.0.1')
-        port = os.environ.get('FLASK_PORT', '5000')
-        url = f"http://{host}:{port}/internal/emit"
-        resp = requests.post(url, json={"event": event_name, "data": data}, timeout=1)
-        if resp.status_code != 200:
-            print(f"[Overlay Error] Failed to emit event {event_name}: Status {resp.status_code}")
-    except Exception as e:
-        print(f"[Overlay Error] Failed to emit event {event_name}: {e}")
+    def _do_post():
+        try:
+            host = os.environ.get('FLASK_HOST', '127.0.0.1')
+            port = os.environ.get('FLASK_PORT', '5000')
+            url = f"http://{host}:{port}/internal/emit"
+            resp = requests.post(url, json={"event": event_name, "data": data}, timeout=1)
+            if resp.status_code != 200:
+                print(f"[Overlay Error] Failed to emit event {event_name}: Status {resp.status_code}")
+        except Exception:
+            pass
+    _http_executor.submit(_do_post)
 
 def write_obs_boss_files(boss_name, current_hp, max_hp):
     """Write boss details to local text files for OBS GDI+ text source integration"""
@@ -110,15 +115,17 @@ def send_streamerbot_message(message):
         }
     }
     
-    try:
-        res = requests.post(http_url, json=payload, timeout=2)
-        success = res.status_code in (200, 204)
-        safe_msg = message[:80].encode('ascii', 'backslashreplace').decode('ascii')
-        if success:
-            print(f"[HTTP->SB] Message sent successfully (status {res.status_code}): {safe_msg}")
-        else:
-            print(f"[HTTP->SB] Unexpected status {res.status_code} for message: {safe_msg}")
-        return success
-    except Exception as e:
-        print(f"[HTTP->SB] Error sending message to Streamer.bot: {e}")
-        return False
+    def _do_send():
+        try:
+            res = requests.post(http_url, json=payload, timeout=2)
+            success = res.status_code in (200, 204)
+            safe_msg = message[:80].encode('ascii', 'backslashreplace').decode('ascii')
+            if success:
+                print(f"[HTTP->SB] Message sent successfully (status {res.status_code}): {safe_msg}")
+            else:
+                print(f"[HTTP->SB] Unexpected status {res.status_code} for message: {safe_msg}")
+        except Exception:
+            pass
+
+    _http_executor.submit(_do_send)
+    return True

@@ -12,6 +12,14 @@ from utils import emit_to_overlay
 LAST_ACTIVE = {}  # player_id -> datetime
 PLAYER_BUFFS = {}  # player_id -> {buff_name: (value, expires_at)}
 
+import sys
+if 'game.combat' in sys.modules:
+    _old_combat = sys.modules['game.combat']
+    if hasattr(_old_combat, 'LAST_ACTIVE'):
+        LAST_ACTIVE = _old_combat.LAST_ACTIVE
+    if hasattr(_old_combat, 'PLAYER_BUFFS'):
+        PLAYER_BUFFS = _old_combat.PLAYER_BUFFS
+
 def get_player_buff(player_id, buff_name):
     buffs = PLAYER_BUFFS.get(player_id, {})
     if buff_name in buffs:
@@ -637,13 +645,7 @@ def revive_party_members(user):
     participants = boss.get('participants', [])
     
     # Find all players with active respawn cooldowns
-    conn = db.get_connection()
-    try:
-        c = conn.cursor()
-        c.execute("SELECT player_id, expires_at FROM cooldowns WHERE action = 'respawn'")
-        rows = c.fetchall()
-    finally:
-        conn.close()
+    rows = db.cooldowns.get_all_respawn_cooldowns()
     
     dead_pids = set()
     now = datetime.datetime.now()
