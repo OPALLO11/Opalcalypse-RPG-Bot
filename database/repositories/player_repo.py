@@ -5,6 +5,7 @@ Player repository — all player CRUD, hydration, gold, EXP, and equipment queri
 import json
 import os
 from datetime import datetime
+
 from .base import BaseRepository
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data')
@@ -268,7 +269,7 @@ class PlayerRepository(BaseRepository):
                     self._get_required_exp = get_required_exp
                 except ImportError:
                     pass
-            req_exp = self._get_required_exp(level) if self._get_required_exp else (level * 200 + level**2 * 50)
+            req_exp = self._get_required_exp(level) if self._get_required_exp else (level * 200 + level ** 2 * 50)
             while exp >= req_exp:
                 if level >= max_level_allowed:
                     exp = req_exp - 1
@@ -276,7 +277,7 @@ class PlayerRepository(BaseRepository):
                 exp -= req_exp
                 level += 1
                 level_up = True
-                req_exp = self._get_required_exp(level) if self._get_required_exp else (level * 200 + level**2 * 50)
+                req_exp = self._get_required_exp(level) if self._get_required_exp else (level * 200 + level ** 2 * 50)
 
             current_class_data['level'] = level
             current_class_data['exp'] = exp

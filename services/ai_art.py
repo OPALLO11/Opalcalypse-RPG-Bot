@@ -1,10 +1,12 @@
-import os
-import json
-import time
-import requests
 import datetime
-from database import db
+import json
+import os
 import random
+import time
+
+import requests
+
+from database import db
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config.json')
 
@@ -17,16 +19,18 @@ BLACKLIST_KEYWORDS = [
     "hate", "racist"
 ]
 
+
 def keyword_filter(prompt: str) -> bool:
     prompt_lower = prompt.lower()
     return not any(keyword in prompt_lower for keyword in BLACKLIST_KEYWORDS)
+
 
 def filter_prompt(prompt: str):
     is_safe = keyword_filter(prompt)
     if not is_safe:
         return False, "Blocked by keyword filter"
 
-    openai_key = os.getenv("OPENAI_API_KEY") # You can define this in .env
+    openai_key = os.getenv("OPENAI_API_KEY")  # You can define this in .env
     if openai_key:
         try:
             import openai
@@ -42,6 +46,7 @@ def filter_prompt(prompt: str):
 
     return True, "Safe"
 
+
 def generate_image(prompt: str, username: str, bits_amount: int, is_custom: bool):
     is_safe, msg = filter_prompt(prompt)
     if not is_safe:
@@ -53,29 +58,29 @@ def generate_image(prompt: str, username: str, bits_amount: int, is_custom: bool
 
     model = config['gemini'].get('model', 'imagen-3.0-generate-001')
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:predict?key={api_key}"
-    
+
     payload = {
         "instances": [{"prompt": prompt}],
         "parameters": {"sampleCount": 1}
     }
-    
+
     try:
         resp = requests.post(url, json=payload, headers={'Content-Type': 'application/json'})
         resp.raise_for_status()
         data = resp.json()
         b64_image = data['predictions'][0]['bytesBase64']
-        
+
         import base64
         image_data = base64.b64decode(b64_image)
-        
+
         filename = f"gen_{int(time.time())}_{username}.jpg"
         gallery_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'public', 'art')
         os.makedirs(gallery_dir, exist_ok=True)
         gallery_path = os.path.join(gallery_dir, filename)
-        
+
         with open(gallery_path, 'wb') as f:
             f.write(image_data)
-            
+
         img_url = f"art/{filename}"
     except Exception as e:
         print(f"Error generating image: {e}")
@@ -111,23 +116,24 @@ def generate_image(prompt: str, username: str, bits_amount: int, is_custom: bool
 
     return True, "Success", img_url
 
+
 def handle_bits(username, amount, message=""):
     cfg = config['bits_art']
     if not cfg.get('enabled', True):
         return False, "AI Art generation is currently disabled."
-        
+
     min_random = cfg['min_bits_random']
     min_custom = cfg['min_bits_custom']
-    
+
     if amount < min_random:
         return False, None
-        
+
     is_custom = amount >= min_custom and message.strip() != ""
     if is_custom:
         prompt = message.strip()
     else:
         prompt = random.choice(cfg['random_prompts'])
-        
+
     success, msg, img_url = generate_image(prompt, username, amount, is_custom)
     if success:
         return True, {

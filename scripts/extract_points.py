@@ -1,13 +1,14 @@
 import json
-import sqlite3
 import os
+import sqlite3
+
 
 def migrate_streamerbot_points():
     # 1. Load the Twitch Data to map User ID -> Username
     twitch_dump_path = 'temp_litedb/twitch_dump.json'
     globals_dump_path = 'temp_litedb/globals_dump.json'
     db_path = 'data/rpg_database.db'
-    
+
     if not os.path.exists(twitch_dump_path) or not os.path.exists(globals_dump_path):
         print("Error: Missing JSON dump files. Please make sure C# export script ran.")
         return
@@ -15,7 +16,7 @@ def migrate_streamerbot_points():
     print("Loading twitch_dump.json...")
     with open(twitch_dump_path, 'r', encoding='utf-8') as f:
         twitch_data = json.load(f)
-        
+
     print("Loading globals_dump.json...")
     with open(globals_dump_path, 'r', encoding='utf-8') as f:
         globals_data = json.load(f)
@@ -30,7 +31,7 @@ def migrate_streamerbot_points():
                 name = user.get('Name')
             if not name:
                 name = user.get('DisplayName')
-            
+
             if uid and name:
                 # Ensure lowercase for exact DB match
                 user_map[str(uid)] = name.lower()
@@ -62,7 +63,7 @@ def migrate_streamerbot_points():
                             points = int(val_obj)
                         except:
                             pass
-                    
+
                     if points > 0:
                         points_map[username] = points
 
@@ -72,11 +73,27 @@ def migrate_streamerbot_points():
     print(f"Importing to {db_path}...")
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
-    
+
     c.execute('''CREATE TABLE IF NOT EXISTS players
-                 (username TEXT PRIMARY KEY, level INTEGER, xp INTEGER, currency INTEGER,
-                 strength INTEGER, max_hp INTEGER, current_hp INTEGER)''')
-    
+                 (
+                     username
+                     TEXT
+                     PRIMARY
+                     KEY,
+                     level
+                     INTEGER,
+                     xp
+                     INTEGER,
+                     currency
+                     INTEGER,
+                     strength
+                     INTEGER,
+                     max_hp
+                     INTEGER,
+                     current_hp
+                     INTEGER
+                 )''')
+
     count = 0
     for username, points in points_map.items():
         # Add to currency if user exists, else create user with that currency
@@ -86,13 +103,16 @@ def migrate_streamerbot_points():
             new_val = row[0] + points
             c.execute("UPDATE players SET currency=? WHERE username=?", (new_val, username))
         else:
-            c.execute("INSERT INTO players (username, level, xp, currency, strength, max_hp, current_hp) VALUES (?, 1, 0, ?, 1, 100, 100)", (username, points))
+            c.execute(
+                "INSERT INTO players (username, level, xp, currency, strength, max_hp, current_hp) VALUES (?, 1, 0, ?, 1, 100, 100)",
+                (username, points))
         count += 1
-        
+
     conn.commit()
     conn.close()
-    
+
     print(f"Successfully migrated points for {count} users!")
+
 
 if __name__ == "__main__":
     migrate_streamerbot_points()

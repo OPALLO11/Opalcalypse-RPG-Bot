@@ -3,6 +3,7 @@ Challenge repository — stream challenge CRUD.
 """
 
 from datetime import datetime
+
 from .base import BaseRepository
 
 

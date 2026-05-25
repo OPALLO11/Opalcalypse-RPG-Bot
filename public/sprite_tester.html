@@ -81,73 +81,73 @@
 
 <body>
 
-    <h1>Opallo RPG: Sprite Sheet Tester</h1>
-    <p>Use this tool to test your exported Sprite Sheets before integrating them into the bot.</p>
+<h1>Opallo RPG: Sprite Sheet Tester</h1>
+<p>Use this tool to test your exported Sprite Sheets before integrating them into the bot.</p>
 
-    <div class="controls">
-        <div class="control-group">
-            <label>Image URL or Local Path (e.g. images/items/boss.png)</label>
-            <input type="text" id="img-url"
-                value="https://placehold.co/1200x300/png?text=Frame1+|+Frame2+|+Frame3+|+Frame4">
-        </div>
-        <div class="control-group">
-            <label>Total Frames in Image</label>
-            <input type="number" id="frame-count" value="4" min="1">
-        </div>
-        <div class="control-group">
-            <label>Animation Speed (Seconds per cycle)</label>
-            <input type="number" id="anim-speed" value="0.8" step="0.1" min="0.1">
-        </div>
-        <div class="control-group">
-            <label>Display Size (px) - Scales the UI</label>
-            <input type="number" id="display-size" value="300" min="50">
-        </div>
+<div class="controls">
+    <div class="control-group">
+        <label>Image URL or Local Path (e.g. images/items/boss.png)</label>
+        <input type="text" id="img-url"
+               value="https://placehold.co/1200x300/png?text=Frame1+|+Frame2+|+Frame3+|+Frame4">
     </div>
-
-    <div class="preview-area">
-        <div id="sprite-viewport"></div>
+    <div class="control-group">
+        <label>Total Frames in Image</label>
+        <input type="number" id="frame-count" value="4" min="1">
     </div>
+    <div class="control-group">
+        <label>Animation Speed (Seconds per cycle)</label>
+        <input type="number" id="anim-speed" value="0.8" step="0.1" min="0.1">
+    </div>
+    <div class="control-group">
+        <label>Display Size (px) - Scales the UI</label>
+        <input type="number" id="display-size" value="300" min="50">
+    </div>
+</div>
 
-    <script>
-        const viewport = document.getElementById('sprite-viewport');
-        const imgUrlInput = document.getElementById('img-url');
-        const frameCountInput = document.getElementById('frame-count');
-        const animSpeedInput = document.getElementById('anim-speed');
-        const displaySizeInput = document.getElementById('display-size');
+<div class="preview-area">
+    <div id="sprite-viewport"></div>
+</div>
 
-        function updateSprite() {
-            const url = imgUrlInput.value;
-            const frames = parseInt(frameCountInput.value) || 1;
-            const speed = parseFloat(animSpeedInput.value) || 1;
-            const size = parseInt(displaySizeInput.value) || 300;
+<script>
+    const viewport = document.getElementById('sprite-viewport');
+    const imgUrlInput = document.getElementById('img-url');
+    const frameCountInput = document.getElementById('frame-count');
+    const animSpeedInput = document.getElementById('anim-speed');
+    const displaySizeInput = document.getElementById('display-size');
 
-            // Update Viewport Size
-            viewport.style.width = size + 'px';
-            viewport.style.height = size + 'px';
+    function updateSprite() {
+        const url = imgUrlInput.value;
+        const frames = parseInt(frameCountInput.value) || 1;
+        const speed = parseFloat(animSpeedInput.value) || 1;
+        const size = parseInt(displaySizeInput.value) || 300;
 
-            // Update Image
-            viewport.style.backgroundImage = `url('${url}')`;
+        // Update Viewport Size
+        viewport.style.width = size + 'px';
+        viewport.style.height = size + 'px';
 
-            // Magic formula for horizontal sprite sheets: 
-            // Background width = Viewport Width * Total Frames
-            viewport.style.backgroundSize = `${size * frames}px ${size}px`;
+        // Update Image
+        viewport.style.backgroundImage = `url('${url}')`;
 
-            // Reset and apply animation with steps()
-            // steps() jumps frames cleanly instead of smoothly sliding
-            viewport.style.animation = 'none';
-            viewport.offsetHeight; // trigger reflow
-            viewport.style.animation = `playSprite ${speed}s steps(${frames}) infinite`;
-        }
+        // Magic formula for horizontal sprite sheets:
+        // Background width = Viewport Width * Total Frames
+        viewport.style.backgroundSize = `${size * frames}px ${size}px`;
 
-        // Listen for changes
-        imgUrlInput.addEventListener('input', updateSprite);
-        frameCountInput.addEventListener('input', updateSprite);
-        animSpeedInput.addEventListener('input', updateSprite);
-        displaySizeInput.addEventListener('input', updateSprite);
+        // Reset and apply animation with steps()
+        // steps() jumps frames cleanly instead of smoothly sliding
+        viewport.style.animation = 'none';
+        viewport.offsetHeight; // trigger reflow
+        viewport.style.animation = `playSprite ${speed}s steps(${frames}) infinite`;
+    }
 
-        // Initial setup
-        updateSprite();
-    </script>
+    // Listen for changes
+    imgUrlInput.addEventListener('input', updateSprite);
+    frameCountInput.addEventListener('input', updateSprite);
+    animSpeedInput.addEventListener('input', updateSprite);
+    displaySizeInput.addEventListener('input', updateSprite);
+
+    // Initial setup
+    updateSprite();
+</script>
 
 </body>
 

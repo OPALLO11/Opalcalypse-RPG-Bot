@@ -92,22 +92,22 @@ socket.on('boss_defeated', (data) => {
 
     const li = document.createElement('li');
     let content = `<strong>🏆 Boss Defeated by ${data.winner}!</strong>`;
-    
+
     if (data.gold_rewards && data.gold_rewards.length > 0) {
-        content += `<br><span class="loot-title">💰 ส่วนแบ่ง Gold:</span><br>` + 
-                   data.gold_rewards.map(g => ` &nbsp;&nbsp;• ${g.character_name}: +${g.amount.toLocaleString()}G`).join('<br>');
+        content += `<br><span class="loot-title">💰 ส่วนแบ่ง Gold:</span><br>` +
+            data.gold_rewards.map(g => ` &nbsp;&nbsp;• ${g.character_name}: +${g.amount.toLocaleString()}G`).join('<br>');
     }
-    
+
     if (data.drops && data.drops.length > 0) {
-        content += `<br><span class="loot-title">🎁 Loot Drops:</span><br>` + 
-                   data.drops.map(d => ` &nbsp;&nbsp;• ${d}`).join('<br>');
+        content += `<br><span class="loot-title">🎁 Loot Drops:</span><br>` +
+            data.drops.map(d => ` &nbsp;&nbsp;• ${d}`).join('<br>');
     }
 
     li.innerHTML = content;
     logList.appendChild(li);
     const combatLog = document.getElementById('combat-log');
     if (combatLog) combatLog.scrollTop = combatLog.scrollHeight;
-    
+
     if (!showParam || showParam === 'boss') {
         hpBarFill.style.width = '0%';
         hpText.innerText = `0 / Boss HP`;
@@ -156,13 +156,13 @@ let carouselPage = 0;
 
 function renderParty() {
     partyList.innerHTML = '';
-    
+
     // Clear dynamic classes
     partyContainer.classList.remove('compact', 'ultra-compact', 'grid-mode');
-    
+
     const count = currentPartyData.length;
     let modeToUse = layoutMode;
-    
+
     if (modeToUse === 'auto') {
         if (count > 7) {
             modeToUse = 'ultra-compact';
@@ -172,16 +172,16 @@ function renderParty() {
             modeToUse = 'normal';
         }
     }
-    
+
     // Reset carousel interval if not in carousel/scroll mode
     const isCarousel = (modeToUse === 'carousel' || modeToUse === 'scroll');
     if (!isCarousel && carouselInterval) {
         clearInterval(carouselInterval);
         carouselInterval = null;
     }
-    
+
     let displayPlayers = [...currentPartyData];
-    
+
     if (isCarousel) {
         const totalPages = Math.ceil(count / CAROUSEL_PAGE_SIZE);
         if (totalPages > 1) {
@@ -208,7 +208,7 @@ function renderParty() {
         const titleElem = document.querySelector('.party-title');
         if (titleElem) titleElem.innerText = 'Party';
     }
-    
+
     // Apply CSS classes to container
     if (modeToUse === 'compact') {
         partyContainer.classList.add('compact');
@@ -217,7 +217,7 @@ function renderParty() {
     } else if (modeToUse === 'grid') {
         partyContainer.classList.add('grid-mode');
     }
-    
+
     displayPlayers.forEach(player => {
         const card = document.createElement('div');
         card.className = `party-card ${player.class}`;
@@ -320,7 +320,7 @@ socket.on('inspect_player', (data) => {
                     imgEl.onerror = null;
                 };
             };
-            
+
             // Show enhancement level clearly in the item name text underneath
             const nameText = itemData.enhancement_level > 0 ? `${itemData.name} +${itemData.enhancement_level}` : itemData.name;
             nameEl.innerText = nameText;
@@ -403,7 +403,7 @@ socket.on('challenge_update', (challengeData) => {
     const rewardEl = document.getElementById('challenge-reward');
 
     if (descEl) descEl.innerText = challengeData.description;
-    
+
     if (rewardEl) {
         let rewardText = "";
         const amt = challengeData.reward_amount.toLocaleString();

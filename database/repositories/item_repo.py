@@ -3,6 +3,7 @@ Item repository — item CRUD, ownership queries, enhancement helpers.
 """
 
 from datetime import datetime
+
 from .base import BaseRepository
 
 
@@ -56,7 +57,7 @@ class ItemRepository(BaseRepository):
             now = datetime.now().isoformat()
             c.execute(
                 '''INSERT INTO items
-                   (owner_id, item_id, obtained_from, obtained_at, enhancement_level)
+                       (owner_id, item_id, obtained_from, obtained_at, enhancement_level)
                    VALUES (?, ?, ?, ?, 0)''',
                 (owner_id, item_id, boss_name, now),
             )

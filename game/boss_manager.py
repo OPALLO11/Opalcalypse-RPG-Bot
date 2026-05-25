@@ -1,15 +1,18 @@
-import random
 import datetime
-from .logic import BOSSES, calculate_boss_hp
+import random
+
 from database import db
+from .logic import BOSSES, calculate_boss_hp
 
 # Preserve boss_state across module reloads
 _old_boss_manager = None
 import sys
+
 if 'game.boss_manager' in sys.modules:
     _old_bm_mod = sys.modules['game.boss_manager']
     if hasattr(_old_bm_mod, 'boss_manager'):
         _old_boss_manager = _old_bm_mod.boss_manager
+
 
 class BossManager:
     def __init__(self):
@@ -17,7 +20,6 @@ class BossManager:
         if _old_boss_manager is not None:
             self.boss_state = _old_boss_manager.boss_state
 
-        
     def spawn_boss(self, active_players_count, boss_type='normal'):
         if boss_type == 'normal':
             import json, os
@@ -30,7 +32,7 @@ class BossManager:
                 monthly_chance = game_config.get('monthly_boss_chance', 0.05)
                 enable_weekly = game_config.get('enable_weekly_boss', False)
                 weekly_chance = game_config.get('weekly_boss_chance', 0.1)
-                
+
                 roll = random.random()
                 if enable_monthly and roll < monthly_chance:
                     boss_type = 'monthly'
@@ -60,12 +62,12 @@ class BossManager:
             boss = random.choice(pool)
 
         hp = calculate_boss_hp(boss['base_hp'], active_players_count)
-        
+
         # In JSON database, we just overwrite the active instance or mark old as escaped
         old_boss = db.get_active_boss()
         if old_boss and old_boss.get('status') == 'active':
             db.update_boss(old_boss['instance_id'], {'status': 'escaped'})
-            
+
         boss_data = {
             'boss_id': boss['id'],
             'name': boss['name'],
@@ -80,7 +82,7 @@ class BossManager:
             'image_url': boss.get('image_url', ''),
             'participants': []
         }
-        
+
         db.set_active_boss(boss_data)
         active_boss = db.get_active_boss()
         if active_boss:
@@ -89,7 +91,7 @@ class BossManager:
                 write_obs_boss_files(active_boss['name'], active_boss['current_hp'], active_boss['max_hp'])
             except Exception as e:
                 print(f"Error calling write_obs_boss_files in spawn_boss: {e}")
-                
+
             self.boss_state[active_boss['instance_id']] = {
                 'charge': 0,
                 'is_charging': False,
@@ -99,7 +101,7 @@ class BossManager:
                 'next_attack': None
             }
         return active_boss
-        
+
     def get_current_boss(self):
         boss = db.get_active_boss()
         if boss and boss.get('status') == 'active':
@@ -119,31 +121,31 @@ class BossManager:
         boss = self.get_current_boss()
         if not boss:
             return False, 0
-            
+
         new_hp = max(0, boss['current_hp'] - amount)
         updated_boss = db.update_boss(boss['instance_id'], {'current_hp': new_hp})
-        
+
         if updated_boss:
             try:
                 from utils import write_obs_boss_files
                 write_obs_boss_files(updated_boss['name'], updated_boss['current_hp'], updated_boss['max_hp'])
             except Exception as e:
                 print(f"Error calling write_obs_boss_files in take_damage: {e}")
-                
+
         is_dead = (new_hp == 0)
-        return is_dead, new_hp 
-        
+        return is_dead, new_hp
+
     def record_action(self, boss, player_id, action_type):
         instance_id = boss['instance_id']
         state = self.boss_state[instance_id]
-        
+
         result = {'warning': False, 'aoe_attack': False, 'defenders': set()}
-        
+
         if state['is_charging']:
             if action_type == 'def':
                 state['defending_players'].add(player_id)
             return result
-            
+
         # Normal accumulation logic
         if action_type == 'attack':
             state['charge'] += random.randint(10, 14)
@@ -153,12 +155,12 @@ class BossManager:
             state['charge'] += 100
         elif action_type == 'def':
             pass
-            
+
         if state['charge'] >= 100:
             state['is_charging'] = True
             state['charge_start_time'] = datetime.datetime.now()
             state['defending_players'] = set()
-            
+
             # Select random skill
             from .logic import BOSSES
             static_boss = None
@@ -169,17 +171,18 @@ class BossManager:
                         break
                 if static_boss:
                     break
-                    
+
             skills = static_boss.get('skills', []) if static_boss else []
             if skills:
                 chosen_skill = random.choice(skills)
             else:
                 chosen_skill = {"name": "Mighty Strike", "type": "physical", "description": "โจมตีอย่างรุนแรง"}
-                
+
             state['next_attack'] = chosen_skill
             result['next_attack'] = chosen_skill
             result['warning'] = True
-            
+
         return result
+
 
 boss_manager = BossManager()

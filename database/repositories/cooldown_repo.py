@@ -20,9 +20,9 @@ class CooldownRepository(BaseRepository):
         with self._transact() as (conn, c):
             c.execute(
                 '''INSERT INTO cooldowns (player_id, action, expires_at)
-                   VALUES (?, ?, ?)
-                   ON CONFLICT(player_id, action)
-                   DO UPDATE SET expires_at=excluded.expires_at''',
+                   VALUES (?, ?, ?) ON CONFLICT(player_id, action)
+                   DO
+                UPDATE SET expires_at=excluded.expires_at''',
                 (player_id, action, expires_at_iso),
             )
 

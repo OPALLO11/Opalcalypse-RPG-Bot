@@ -127,7 +127,7 @@ class CombatLogRepository(BaseRepository):
                     is_healing = action.lower() in healing_actions
                     if not is_healing:
                         player_damage[player_id] = (
-                            player_damage.get(player_id, 0) + damage
+                                player_damage.get(player_id, 0) + damage
                         )
 
                     if boss_instance_id not in boss_participants:
@@ -137,7 +137,7 @@ class CombatLogRepository(BaseRepository):
                 # 1. Insert all combat logs
                 c.executemany(
                     '''INSERT INTO combat_log
-                       (boss_instance_id, player_id, action, damage, is_crit, timestamp)
+                           (boss_instance_id, player_id, action, damage, is_crit, timestamp)
                        VALUES (?, ?, ?, ?, ?, ?)''',
                     log_entries,
                 )

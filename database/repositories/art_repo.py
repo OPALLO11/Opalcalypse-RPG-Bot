@@ -3,6 +3,7 @@ Art gallery repository — recording generated art entries.
 """
 
 from datetime import datetime
+
 from .base import BaseRepository
 
 
