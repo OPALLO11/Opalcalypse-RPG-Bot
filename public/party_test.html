@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Party UI Tester</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Test environment controls */
+        #test-controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 2px solid #eccc68;
+            border-radius: 8px;
+            padding: 15px;
+            z-index: 9999;
+            font-family: sans-serif;
+            color: white;
+            width: 320px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        #test-controls h3 {
+            margin: 0 0 10px 0;
+            color: #eccc68;
+            border-bottom: 1px solid rgba(236, 204, 104, 0.3);
+            padding-bottom: 5px;
+        }
+        .control-group {
+            margin-bottom: 12px;
+        }
+        .control-group label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 5px;
+            color: #ccc;
+        }
+        .control-group select, .control-group input {
+            width: 100%;
+            background: #222;
+            border: 1px solid #555;
+            color: white;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        .control-group button {
+            background: #eccc68;
+            border: none;
+            color: black;
+            padding: 8px 12px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .control-group button:hover {
+            background: #f1c40f;
+        }
+        
+        /* Layout Guides to simulate OBS placement */
+        #simulated-obs {
+            position: absolute;
+            width: 1920px;
+            height: 1080px;
+            background: #111; /* Dark grey instead of black so we can see overlay limits */
+            overflow: hidden;
+            border: 4px solid #333;
+        }
+
+        /* Mock Webcam frame matching user's layout */
+        .mock-webcam {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 250px;
+            height: 220px;
+            border: 3px double #9b59b6;
+            background: rgba(155, 89, 182, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #d2a6ff;
+            font-weight: bold;
+            font-family: 'Cinzel', serif;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(155, 89, 182, 0.4);
+        }
+
+        /* Mock Boss UI frame matching user's layout */
+        .mock-boss {
+            position: absolute;
+            top: 540px;
+            left: 15px;
+            width: 250px;
+            height: 480px;
+            border: 3px double #c0392b;
+            background: rgba(192, 57, 43, 0.15);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            color: #ff9f89;
+            font-family: 'Cinzel', serif;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(192, 57, 43, 0.4);
+        }
+
+        /* Override style.css position for testing matching OBS layout */
+        #party-container.test-obs-mode {
+            position: absolute;
+            top: 250px; /* Right below webcam (235px) plus some padding */
+            left: 15px;
+            right: auto;
+            transform: none;
+            width: 250px; /* Restrict width to fit left column */
+            max-height: 280px; /* Maximum height before overlapping Boss frame */
+            margin: 0;
+            background: rgba(0, 0, 0, 0.8);
+            border-color: rgba(236, 204, 104, 0.5);
+        }
+
+        /* CSS for Compact & Ultra-Compact mode */
+        #party-container.compact .party-card {
+            padding: 5px 8px;
+            gap: 3px;
+        }
+        #party-container.compact .player-name {
+            font-size: 12px;
+            max-width: 110px;
+        }
+        #party-container.compact .bar-container {
+            height: 10px;
+        }
+        #party-container.compact .bar-text {
+            font-size: 8px;
+        }
+
+        /* Ultra-compact: HP and MP bars side-by-side */
+        #party-container.ultra-compact .party-card {
+            padding: 4px 6px;
+            gap: 2px;
+        }
+        #party-container.ultra-compact .player-name {
+            font-size: 11px;
+            max-width: 120px;
+        }
+        #party-container.ultra-compact .status-bars {
+            flex-direction: row;
+            gap: 4px;
+        }
+        #party-container.ultra-compact .bar-container {
+            flex: 1;
+            height: 8px;
+        }
+        #party-container.ultra-compact .bar-text {
+            font-size: 7px;
+            transform: translate(-50%, -55%);
+        }
+        #party-container.ultra-compact .class-icon {
+            width: 18px;
+            height: 18px;
+            font-size: 11px;
+        }
+        #party-container.ultra-compact .player-level {
+            font-size: 8px;
+            padding: 0px 3px;
+        }
+        #party-container.ultra-compact .badge {
+            font-size: 8px;
+            padding: 1px 4px;
+        }
+
+        /* Two-Column Grid Mode inside OBS Left panel */
+        #party-container.grid-mode {
+            width: 520px !important; /* Double width to support 2 columns */
+        }
+        #party-container.grid-mode #party-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        /* Info Badge style for visual checks */
+        .height-indicator {
+            background: #27ae60;
+            color: white;
+            font-weight: bold;
+            padding: 5px;
+            border-radius: 4px;
+            font-size: 11px;
+            text-align: center;
+            margin-top: 5px;
+        }
+        .height-indicator.danger {
+            background: #c0392b;
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="simulated-obs">
+        <!-- Mock OBS layout elements -->
+        <div class="mock-webcam">WEBCAM FRAME (0 - 220px)</div>
+        
+        <!-- Party Container under test -->
+        <div id="party-container" class="test-obs-mode">
+            <div class="party-title">Party</div>
+            <div id="party-list"></div>
+            <div id="height-info" class="height-indicator">Height: 0px</div>
+        </div>
+
+        <div class="mock-boss">
+            <div>BOSS FRAME (540px - 1020px)</div>
+            <div>[ Boss Sprite ]</div>
+            <div>[ Boss HP Frame ]</div>
+        </div>
+    </div>
+
+    <!-- Control panel on top of the simulation -->
+    <div id="test-controls">
+        <h3>Party UI Tester</h3>
+        
+        <div class="control-group">
+            <label for="player-count">Number of Players:</label>
+            <select id="player-count">
+                <option value="1">1 Player (Current)</option>
+                <option value="3">3 Players (Standard)</option>
+                <option value="5">5 Players</option>
+                <option value="8">8 Players</option>
+                <option value="10">10 Players (Max Target)</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label for="layout-mode">Layout Style:</label>
+            <select id="layout-mode">
+                <option value="normal">Default Style (Single Column)</option>
+                <option value="compact">Compact Style</option>
+                <option value="ultra-compact">Ultra-Compact Style</option>
+                <option value="auto-compact">Auto-adjust (Based on player count)</option>
+                <option value="grid">2-Column Grid Style</option>
+                <option value="scroll">Scrolling Page Carousel (3 per page)</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <button id="btn-random-damage">Simulate Random Damage</button>
+        </div>
+
+        <div class="control-group" style="font-size: 11px; color: #aaa; line-height: 1.4;">
+            <strong>Layout Safety Status:</strong>
+            <p id="safety-report">Analyzing layout...</p>
+        </div>
+    </div>
+
+    <script>
+        const partyList = document.getElementById('party-list');
+        const partyContainer = document.getElementById('party-container');
+        const playerCountSelect = document.getElementById('player-count');
+        const layoutModeSelect = document.getElementById('layout-mode');
+        const heightInfo = document.getElementById('height-info');
+        const safetyReport = document.getElementById('safety-report');
+        const btnRandomDamage = document.getElementById('btn-random-damage');
+
+        let currentPlayers = [];
+        let carouselInterval = null;
+        let carouselPage = 0;
+
+        const classes = [
+            { name: "warrior", icon: "⚔️" },
+            { name: "mage", icon: "🔮" },
+            { name: "rogue", icon: "⚔️" },
+            { name: "priest", icon: "💖" }
+        ];
+
+        function generatePlayers(count) {
+            const list = [];
+            for (let i = 1; i <= count; i++) {
+                const cls = classes[(i - 1) % classes.length];
+                list.push({
+                    character_name: `Hero Name ${i}`,
+                    class: cls.name,
+                    icon: cls.icon,
+                    level: 1 + Math.floor(Math.random() * 20),
+                    hp: 800 + i * 50,
+                    max_hp: 1000 + i * 50,
+                    mp: 40 + i * 10,
+                    max_mp: 100 + i * 10,
+                    is_dead: false,
+                    is_defending: Math.random() > 0.8
+                });
+            }
+            return list;
+        }
+
+        function updateUI() {
+            const count = parseInt(playerCountSelect.value);
+            const mode = layoutModeSelect.value;
+
+            // Generate list if length changed
+            if (currentPlayers.length !== count) {
+                currentPlayers = generatePlayers(count);
+            }
+
+            // Reset carousel if not in scroll mode
+            if (mode !== 'scroll' && carouselInterval) {
+                clearInterval(carouselInterval);
+                carouselInterval = null;
+            }
+
+            // Remove classes
+            partyContainer.classList.remove('compact', 'ultra-compact', 'grid-mode');
+            partyContainer.style.maxHeight = '';
+            partyContainer.style.overflowY = '';
+
+            let displayPlayers = [...currentPlayers];
+
+            // Apply Layout Styles
+            if (mode === 'compact') {
+                partyContainer.classList.add('compact');
+            } else if (mode === 'ultra-compact') {
+                partyContainer.classList.add('ultra-compact');
+            } else if (mode === 'grid') {
+                partyContainer.classList.add('grid-mode');
+            } else if (mode === 'auto-compact') {
+                if (count > 7) {
+                    partyContainer.classList.add('ultra-compact');
+                } else if (count > 4) {
+                    partyContainer.classList.add('compact');
+                }
+            } else if (mode === 'scroll') {
+                // Show 3 players at a time
+                const pageSize = 3;
+                const totalPages = Math.ceil(count / pageSize);
+                
+                if (!carouselInterval) {
+                    carouselPage = 0;
+                    carouselInterval = setInterval(() => {
+                        carouselPage = (carouselPage + 1) % totalPages;
+                        updateUI();
+                    }, 5000); // switch every 5 seconds
+                }
+
+                const startIndex = carouselPage * pageSize;
+                displayPlayers = currentPlayers.slice(startIndex, startIndex + pageSize);
+                
+                // Indicate page in title
+                document.querySelector('.party-title').innerText = `Party (${carouselPage + 1}/${totalPages})`;
+            }
+
+            if (mode !== 'scroll') {
+                document.querySelector('.party-title').innerText = 'Party';
+            }
+
+            // Render cards
+            partyList.innerHTML = '';
+            displayPlayers.forEach(player => {
+                const card = document.createElement('div');
+                card.className = `party-card ${player.class}`;
+                if (player.is_dead) card.classList.add('dead');
+                if (player.is_defending) card.classList.add('defending');
+
+                const hpPct = Math.max(0, Math.min(100, (player.hp / player.max_hp) * 100));
+                const mpPct = Math.max(0, Math.min(100, (player.mp / player.max_mp) * 100));
+
+                let badgeHtml = '';
+                if (player.is_dead) badgeHtml += `<span class="badge badge-dead">☠️ Dead</span>`;
+                if (player.is_defending) badgeHtml += `<span class="badge badge-defending">🛡️ Defending</span>`;
+
+                card.innerHTML = `
+                    <div class="party-card-header">
+                        <div class="player-info">
+                            <span class="class-icon">${player.icon}</span>
+                            <span class="player-name">${player.character_name}</span>
+                        </div>
+                        <span class="player-level">Lv.${player.level}</span>
+                    </div>
+                    <div class="status-bars">
+                        <div class="bar-container">
+                            <div class="bar-fill hp-fill" style="width: ${hpPct}%"></div>
+                            <span class="bar-text">HP: ${player.hp} / ${player.max_hp}</span>
+                        </div>
+                        <div class="bar-container">
+                            <div class="bar-fill mp-fill" style="width: ${mpPct}%"></div>
+                            <span class="bar-text">MP: ${player.mp} / ${player.max_mp}</span>
+                        </div>
+                    </div>
+                    ${badgeHtml ? `<div class="status-badges">${badgeHtml}</div>` : ''}
+                `;
+                partyList.appendChild(card);
+            });
+
+            // Measure height of the container
+            setTimeout(() => {
+                const rect = partyContainer.getBoundingClientRect();
+                const height = Math.round(rect.height);
+                heightInfo.innerText = `Height: ${height}px`;
+
+                // Safe limit: top is 250px, Boss starts at 540px. 
+                // Available height = 540 - 250 = 290px!
+                // If it goes beyond 285px, it will overlap Boss name/frame.
+                const limit = 285;
+                if (height > limit) {
+                    heightInfo.className = 'height-indicator danger';
+                    safetyReport.innerHTML = `<span style="color: #ff4757; font-weight: bold;">⚠️ OVERFLOW WARNING!</span><br>Current height of <strong>${height}px</strong> exceeds the available left column slot of <strong>${limit}px</strong>. It will overlap the Boss Frame below!`;
+                } else {
+                    heightInfo.className = 'height-indicator';
+                    safetyReport.innerHTML = `<span style="color: #2ed573; font-weight: bold;">✅ SAFE HEIGHT!</span><br>Current height of <strong>${height}px</strong> fits perfectly within the available space of <strong>${limit}px</strong>.`;
+                }
+            }, 50);
+        }
+
+        // Simulate damage
+        btnRandomDamage.addEventListener('click', () => {
+            currentPlayers.forEach(p => {
+                if (p.is_dead) {
+                    if (Math.random() > 0.7) {
+                        p.is_dead = false;
+                        p.hp = Math.round(p.max_hp * 0.2);
+                    }
+                } else {
+                    const dmg = Math.round(Math.random() * 300);
+                    p.hp = Math.max(0, p.hp - dmg);
+                    p.mp = Math.max(0, p.mp - Math.round(Math.random() * 15));
+                    if (p.hp === 0) p.is_dead = true;
+                }
+            });
+            updateUI();
+        });
+
+        playerCountSelect.addEventListener('change', () => { currentPlayers = []; updateUI(); });
+        layoutModeSelect.addEventListener('change', updateUI);
+
+        // Initial update
+        updateUI();
+    </script>
+</body>
+</html>

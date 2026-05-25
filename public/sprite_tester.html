@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprite Sheet Tester</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .controls {
+            background: #34495e;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            width: 80%;
+            max-width: 600px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="number"],
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: none;
+            box-sizing: border-box;
+        }
+
+        .preview-area {
+            border: 2px dashed #7f8c8d;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #1a252f;
+        }
+
+        /* The actual sprite viewport */
+        #sprite-viewport {
+            width: 300px;
+            /* Custom scale width */
+            height: 300px;
+            /* Custom scale height */
+            background-image: url('https://placehold.co/1200x300/png?text=Frame1+|+Frame2+|+Frame3+|+Frame4');
+            background-size: cover;
+            /* Will be updated via JS */
+            background-position: left;
+            background-repeat: no-repeat;
+            image-rendering: pixelated;
+            /* Good for crisp edges */
+        }
+
+        /* The Animation */
+        @keyframes playSprite {
+            from {
+                background-position: 0px;
+            }
+
+            to {
+                background-position: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Opallo RPG: Sprite Sheet Tester</h1>
+    <p>Use this tool to test your exported Sprite Sheets before integrating them into the bot.</p>
+
+    <div class="controls">
+        <div class="control-group">
+            <label>Image URL or Local Path (e.g. images/items/boss.png)</label>
+            <input type="text" id="img-url"
+                value="https://placehold.co/1200x300/png?text=Frame1+|+Frame2+|+Frame3+|+Frame4">
+        </div>
+        <div class="control-group">
+            <label>Total Frames in Image</label>
+            <input type="number" id="frame-count" value="4" min="1">
+        </div>
+        <div class="control-group">
+            <label>Animation Speed (Seconds per cycle)</label>
+            <input type="number" id="anim-speed" value="0.8" step="0.1" min="0.1">
+        </div>
+        <div class="control-group">
+            <label>Display Size (px) - Scales the UI</label>
+            <input type="number" id="display-size" value="300" min="50">
+        </div>
+    </div>
+
+    <div class="preview-area">
+        <div id="sprite-viewport"></div>
+    </div>
+
+    <script>
+        const viewport = document.getElementById('sprite-viewport');
+        const imgUrlInput = document.getElementById('img-url');
+        const frameCountInput = document.getElementById('frame-count');
+        const animSpeedInput = document.getElementById('anim-speed');
+        const displaySizeInput = document.getElementById('display-size');
+
+        function updateSprite() {
+            const url = imgUrlInput.value;
+            const frames = parseInt(frameCountInput.value) || 1;
+            const speed = parseFloat(animSpeedInput.value) || 1;
+            const size = parseInt(displaySizeInput.value) || 300;
+
+            // Update Viewport Size
+            viewport.style.width = size + 'px';
+            viewport.style.height = size + 'px';
+
+            // Update Image
+            viewport.style.backgroundImage = `url('${url}')`;
+
+            // Magic formula for horizontal sprite sheets: 
+            // Background width = Viewport Width * Total Frames
+            viewport.style.backgroundSize = `${size * frames}px ${size}px`;
+
+            // Reset and apply animation with steps()
+            // steps() jumps frames cleanly instead of smoothly sliding
+            viewport.style.animation = 'none';
+            viewport.offsetHeight; // trigger reflow
+            viewport.style.animation = `playSprite ${speed}s steps(${frames}) infinite`;
+        }
+
+        // Listen for changes
+        imgUrlInput.addEventListener('input', updateSprite);
+        frameCountInput.addEventListener('input', updateSprite);
+        animSpeedInput.addEventListener('input', updateSprite);
+        displaySizeInput.addEventListener('input', updateSprite);
+
+        // Initial setup
+        updateSprite();
+    </script>
+
+</body>
+
+</html>
