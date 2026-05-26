@@ -8,10 +8,6 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-# Fix common Windows asyncio bug (RuntimeError: Event loop is closed)
-if sys.platform == 'win32':
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
 from api.server import run_flask_api
 from bot import run_bot
 
