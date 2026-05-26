@@ -8,8 +8,8 @@ Handles the give-or-enhance logic when a player receives a duplicate item:
 """
 
 import random
+
 from database import db
-from .helpers import find_item_data
 
 
 def give_item_or_enhance(owner_id, item_data, boss_name=""):
@@ -116,4 +116,3 @@ def _get_required_scroll(item_tier):
     elif item_tier == 'UR':
         return 'scroll_t3'
     return None
-

@@ -1,11 +1,11 @@
-import os
 import json
+import os
 import threading
 
-CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config.json')
+from utils import load_config
 
-with open(CONFIG_PATH, 'r') as f:
-    config = json.load(f)
+config = load_config()
+
 
 class TTSManager:
     def __init__(self):
@@ -28,15 +28,17 @@ class TTSManager:
         if username.lower() in self.blacklist: return
         if len(message) < self.min_len: return
         if message.startswith('!'): return
-        
+
         text = f"{username} says. {message}"
+
         def run_tts():
             try:
                 self.engine.say(text)
                 self.engine.runAndWait()
             except Exception as e:
                 pass
-            
+
         threading.Thread(target=run_tts, daemon=True).start()
+
 
 tts_manager = TTSManager()

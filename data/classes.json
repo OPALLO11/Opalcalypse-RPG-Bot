@@ -1,255 +1,255 @@
 {
-    "warrior": {
-        "name": "Warrior",
-        "icon": "⚔️",
-        "base_stats": {
-            "hp": 1200,
-            "mp": 50,
-            "atk": 100,
-            "def": 50
-        },
-        "stat_growth": {
-            "hp": 50,
-            "mp": 2,
-            "atk": 8,
-            "def": 5
-        },
-        "passive": {
-            "name": "Iron Will",
-            "description": "รับดาเมจลด 20%, Ultimate charge +15 ต่อครั้งแทน +10",
-            "damage_reduction": 0.20,
-            "bonus_charge": 5
-        },
-        "skills": {
-            "attack": {
-                "name": "Basic Attack",
-                "damage_multiplier": 1.0,
-                "cooldown": 3,
-                "type": "physical",
-                "mp_cost": 0
-            },
-            "powerstrike": {
-                "name": "Power Strike",
-                "damage_multiplier": 2.5,
-                "cooldown": 30,
-                "type": "physical",
-                "effect": "stun",
-                "effect_duration": 5,
-                "mp_cost": 20
-            },
-            "taunt": {
-                "name": "Taunt",
-                "damage_multiplier": 1.2,
-                "cooldown": 40,
-                "type": "physical",
-                "effect": "taunt",
-                "buff_duration": 15,
-                "mp_cost": 15
-            },
-            "shieldbash": {
-                "name": "Shield Bash",
-                "damage_multiplier": 1.6,
-                "cooldown": 25,
-                "type": "physical",
-                "effect": "def_up",
-                "buff_amount": 0.30,
-                "buff_duration": 20,
-                "mp_cost": 15
-            },
-            "ultimate": {
-                "name": "Berserker Rage",
-                "damage_multiplier": 6.0,
-                "type": "physical",
-                "buff": "atk_up",
-                "buff_amount": 0.50,
-                "buff_duration": 30,
-                "mp_cost": 30
-            }
-        }
+  "warrior": {
+    "name": "Warrior",
+    "icon": "⚔️",
+    "base_stats": {
+      "hp": 1200,
+      "mp": 50,
+      "atk": 100,
+      "def": 50
     },
-    "mage": {
-        "name": "Mage",
-        "icon": "🔮",
-        "base_stats": {
-            "hp": 800,
-            "mp": 100,
-            "atk": 80,
-            "def": 30
-        },
-        "stat_growth": {
-            "hp": 30,
-            "mp": 5,
-            "atk": 6,
-            "def": 3
-        },
-        "passive": {
-            "name": "Arcane Mastery",
-            "description": "Skill damage +30%, MP regen x2, Weak to physical (รับดาเมจ +20%)",
-            "skill_damage_bonus": 0.30,
-            "mp_regen_multiplier": 2.0,
-            "damage_taken_penalty": 0.20
-        },
-        "skills": {
-            "attack": {
-                "name": "Magic Bolt",
-                "damage_multiplier": 0.9,
-                "cooldown": 3,
-                "type": "magic",
-                "mp_cost": 0
-            },
-            "fireball": {
-                "name": "Fireball",
-                "damage_multiplier": 3.2,
-                "cooldown": 20,
-                "type": "magic_fire",
-                "mp_cost": 15
-            },
-            "blizzard": {
-                "name": "Blizzard",
-                "damage_multiplier": 2.0,
-                "cooldown": 45,
-                "type": "magic_ice",
-                "effect": "slow",
-                "effect_duration": 15,
-                "mp_cost": 25
-            },
-            "thunderstrike": {
-                "name": "Thunderstrike",
-                "damage_multiplier": 3.6,
-                "cooldown": 30,
-                "type": "magic_thunder",
-                "bonus_crit_chance": 0.20,
-                "mp_cost": 20
-            },
-            "ultimate": {
-                "name": "Meteor Storm",
-                "damage_multiplier": 8.0,
-                "type": "magic_aoe",
-                "mp_cost": 50
-            }
-        }
+    "stat_growth": {
+      "hp": 50,
+      "mp": 2,
+      "atk": 8,
+      "def": 5
     },
-    "rogue": {
-        "name": "Rogue",
-        "icon": "🗡️",
-        "base_stats": {
-            "hp": 1000,
-            "mp": 75,
-            "atk": 90,
-            "def": 35
-        },
-        "stat_growth": {
-            "hp": 40,
-            "mp": 3,
-            "atk": 10,
-            "def": 3
-        },
-        "passive": {
-            "name": "Deadly Precision",
-            "description": "Crit chance 25% (2x damage), Crit กับ boss HP < 30% = 3x damage",
-            "base_crit_chance": 0.25,
-            "crit_multiplier": 2.0,
-            "low_hp_crit_multiplier": 3.0
-        },
-        "skills": {
-            "attack": {
-                "name": "Quick Slash",
-                "damage_multiplier": 1.1,
-                "cooldown": 3,
-                "type": "physical",
-                "mp_cost": 0
-            },
-            "backstab": {
-                "name": "Backstab",
-                "damage_multiplier": 3.5,
-                "cooldown": 20,
-                "bonus_crit_chance": 0.50,
-                "type": "physical",
-                "mp_cost": 20
-            },
-            "poisondart": {
-                "name": "Poison Dart",
-                "damage_multiplier": 1.5,
-                "cooldown": 30,
-                "type": "physical",
-                "effect": "poison",
-                "effect_duration": 20,
-                "mp_cost": 15
-            },
-            "shadowstep": {
-                "name": "Shadowstep",
-                "damage_multiplier": 1.0,
-                "cooldown": 45,
-                "type": "physical",
-                "effect": "crit_dodge_up",
-                "buff_duration": 15,
-                "mp_cost": 10
-            },
-            "ultimate": {
-                "name": "Assassination",
-                "damage_multiplier": 10.0,
-                "type": "physical",
-                "guaranteed_crit": true,
-                "mp_cost": 40
-            }
-        }
+    "passive": {
+      "name": "Iron Will",
+      "description": "รับดาเมจลด 20%, Ultimate charge +15 ต่อครั้งแทน +10",
+      "damage_reduction": 0.20,
+      "bonus_charge": 5
     },
-    "priest": {
-        "name": "Priest",
-        "icon": "💖",
-        "base_stats": {
-            "hp": 1100,
-            "mp": 90,
-            "atk": 60,
-            "def": 45
-        },
-        "stat_growth": {
-            "hp": 45,
-            "mp": 4,
-            "atk": 5,
-            "def": 4
-        },
-        "passive": {
-            "name": "Divine Grace",
-            "description": "ฮีลแรงขึ้น 30%, ได้รับ MP เริ่มต้น +20",
-            "healing_bonus": 0.30,
-            "bonus_mp": 20
-        },
-        "skills": {
-            "attack": {
-                "name": "Holy Bolt",
-                "damage_multiplier": 1.0,
-                "cooldown": 3,
-                "type": "light",
-                "mp_cost": 0
-            },
-            "heal": {
-                "name": "Heal",
-                "damage_multiplier": 0.0,
-                "cooldown": 15,
-                "type": "healing",
-                "mp_cost": 15
-            },
-            "holysmite": {
-                "name": "Holy Smite",
-                "damage_multiplier": 2.0,
-                "cooldown": 20,
-                "type": "light",
-                "mp_cost": 15
-            },
-            "sanctuary": {
-                "name": "Sanctuary",
-                "damage_multiplier": 0.0,
-                "cooldown": 75,
-                "type": "healing_buff",
-                "mp_cost": 35
-            },
-            "ultimate": {
-                "name": "Miracle",
-                "damage_multiplier": 0.0,
-                "type": "light",
-                "mp_cost": 40
-            }
-        }
+    "skills": {
+      "attack": {
+        "name": "Basic Attack",
+        "damage_multiplier": 1.0,
+        "cooldown": 3,
+        "type": "physical",
+        "mp_cost": 0
+      },
+      "powerstrike": {
+        "name": "Power Strike",
+        "damage_multiplier": 2.5,
+        "cooldown": 30,
+        "type": "physical",
+        "effect": "stun",
+        "effect_duration": 5,
+        "mp_cost": 20
+      },
+      "taunt": {
+        "name": "Taunt",
+        "damage_multiplier": 1.2,
+        "cooldown": 40,
+        "type": "physical",
+        "effect": "taunt",
+        "buff_duration": 15,
+        "mp_cost": 15
+      },
+      "shieldbash": {
+        "name": "Shield Bash",
+        "damage_multiplier": 1.6,
+        "cooldown": 25,
+        "type": "physical",
+        "effect": "def_up",
+        "buff_amount": 0.30,
+        "buff_duration": 20,
+        "mp_cost": 15
+      },
+      "ultimate": {
+        "name": "Berserker Rage",
+        "damage_multiplier": 6.0,
+        "type": "physical",
+        "buff": "atk_up",
+        "buff_amount": 0.50,
+        "buff_duration": 30,
+        "mp_cost": 30
+      }
     }
+  },
+  "mage": {
+    "name": "Mage",
+    "icon": "🔮",
+    "base_stats": {
+      "hp": 800,
+      "mp": 100,
+      "atk": 80,
+      "def": 30
+    },
+    "stat_growth": {
+      "hp": 30,
+      "mp": 5,
+      "atk": 6,
+      "def": 3
+    },
+    "passive": {
+      "name": "Arcane Mastery",
+      "description": "Skill damage +30%, MP regen x2, Weak to physical (รับดาเมจ +20%)",
+      "skill_damage_bonus": 0.30,
+      "mp_regen_multiplier": 2.0,
+      "damage_taken_penalty": 0.20
+    },
+    "skills": {
+      "attack": {
+        "name": "Magic Bolt",
+        "damage_multiplier": 0.9,
+        "cooldown": 3,
+        "type": "magic",
+        "mp_cost": 0
+      },
+      "fireball": {
+        "name": "Fireball",
+        "damage_multiplier": 3.2,
+        "cooldown": 20,
+        "type": "magic_fire",
+        "mp_cost": 15
+      },
+      "blizzard": {
+        "name": "Blizzard",
+        "damage_multiplier": 2.0,
+        "cooldown": 45,
+        "type": "magic_ice",
+        "effect": "slow",
+        "effect_duration": 15,
+        "mp_cost": 25
+      },
+      "thunderstrike": {
+        "name": "Thunderstrike",
+        "damage_multiplier": 3.6,
+        "cooldown": 30,
+        "type": "magic_thunder",
+        "bonus_crit_chance": 0.20,
+        "mp_cost": 20
+      },
+      "ultimate": {
+        "name": "Meteor Storm",
+        "damage_multiplier": 8.0,
+        "type": "magic_aoe",
+        "mp_cost": 50
+      }
+    }
+  },
+  "rogue": {
+    "name": "Rogue",
+    "icon": "🗡️",
+    "base_stats": {
+      "hp": 1000,
+      "mp": 75,
+      "atk": 90,
+      "def": 35
+    },
+    "stat_growth": {
+      "hp": 40,
+      "mp": 3,
+      "atk": 10,
+      "def": 3
+    },
+    "passive": {
+      "name": "Deadly Precision",
+      "description": "Crit chance 25% (2x damage), Crit กับ boss HP < 30% = 3x damage",
+      "base_crit_chance": 0.25,
+      "crit_multiplier": 2.0,
+      "low_hp_crit_multiplier": 3.0
+    },
+    "skills": {
+      "attack": {
+        "name": "Quick Slash",
+        "damage_multiplier": 1.1,
+        "cooldown": 3,
+        "type": "physical",
+        "mp_cost": 0
+      },
+      "backstab": {
+        "name": "Backstab",
+        "damage_multiplier": 3.5,
+        "cooldown": 20,
+        "bonus_crit_chance": 0.50,
+        "type": "physical",
+        "mp_cost": 20
+      },
+      "poisondart": {
+        "name": "Poison Dart",
+        "damage_multiplier": 1.5,
+        "cooldown": 30,
+        "type": "physical",
+        "effect": "poison",
+        "effect_duration": 20,
+        "mp_cost": 15
+      },
+      "shadowstep": {
+        "name": "Shadowstep",
+        "damage_multiplier": 1.0,
+        "cooldown": 45,
+        "type": "physical",
+        "effect": "crit_dodge_up",
+        "buff_duration": 15,
+        "mp_cost": 10
+      },
+      "ultimate": {
+        "name": "Assassination",
+        "damage_multiplier": 10.0,
+        "type": "physical",
+        "guaranteed_crit": true,
+        "mp_cost": 40
+      }
+    }
+  },
+  "priest": {
+    "name": "Priest",
+    "icon": "💖",
+    "base_stats": {
+      "hp": 1100,
+      "mp": 90,
+      "atk": 60,
+      "def": 45
+    },
+    "stat_growth": {
+      "hp": 45,
+      "mp": 4,
+      "atk": 5,
+      "def": 4
+    },
+    "passive": {
+      "name": "Divine Grace",
+      "description": "ฮีลแรงขึ้น 30%, ได้รับ MP เริ่มต้น +20",
+      "healing_bonus": 0.30,
+      "bonus_mp": 20
+    },
+    "skills": {
+      "attack": {
+        "name": "Holy Bolt",
+        "damage_multiplier": 1.0,
+        "cooldown": 3,
+        "type": "light",
+        "mp_cost": 0
+      },
+      "heal": {
+        "name": "Heal",
+        "damage_multiplier": 0.0,
+        "cooldown": 15,
+        "type": "healing",
+        "mp_cost": 15
+      },
+      "holysmite": {
+        "name": "Holy Smite",
+        "damage_multiplier": 2.0,
+        "cooldown": 20,
+        "type": "light",
+        "mp_cost": 15
+      },
+      "sanctuary": {
+        "name": "Sanctuary",
+        "damage_multiplier": 0.0,
+        "cooldown": 75,
+        "type": "healing_buff",
+        "mp_cost": 35
+      },
+      "ultimate": {
+        "name": "Miracle",
+        "damage_multiplier": 0.0,
+        "type": "light",
+        "mp_cost": 40
+      }
+    }
+  }
 }

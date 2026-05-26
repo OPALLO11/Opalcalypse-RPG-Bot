@@ -1,537 +1,537 @@
 {
-    "normal": [
+  "normal": [
+    {
+      "id": 1,
+      "name": "Forest Guardian",
+      "element": "nature",
+      "base_hp": 15000,
+      "base_def": 40,
+      "weakness": [
+        "fire"
+      ],
+      "resist": [
+        "water",
+        "nature"
+      ],
+      "image_url": "images/01_forest_guardian_idle.gif",
+      "skills": [
         {
-            "id": 1,
-            "name": "Forest Guardian",
-            "element": "nature",
-            "base_hp": 15000,
-            "base_def": 40,
-            "weakness": [
-                "fire"
-            ],
-            "resist": [
-                "water",
-                "nature"
-            ],
-            "image_url": "images/01_forest_guardian_idle.gif",
-            "skills": [
-                {
-                    "name": "Leaf Tempest (พายุใบไม้ป่า)",
-                    "type": "magic",
-                    "description": "โจมตีด้วยพายุใบไม้หนาแน่น"
-                },
-                {
-                    "name": "Root Smash (ผืนรากทุบทำลาย)",
-                    "type": "physical",
-                    "description": "ใช้รากไม้ยักษ์ฟาดปัดกวาดพื้น"
-                },
-                {
-                    "name": "Thorny Vines (เถาวัลย์หนามทิ่มแทง)",
-                    "type": "piercing",
-                    "description": "พุ่งเถาวัลย์หนามแหลมคมเข้าเสียบทะลวง"
-                }
-            ]
+          "name": "Leaf Tempest (พายุใบไม้ป่า)",
+          "type": "magic",
+          "description": "โจมตีด้วยพายุใบไม้หนาแน่น"
         },
         {
-            "id": 2,
-            "name": "Ice Golem",
-            "element": "ice",
-            "base_hp": 20000,
-            "base_def": 60,
-            "weakness": [
-                "fire"
-            ],
-            "resist": [
-                "water",
-                "ice"
-            ],
-            "image_url": "images/02_ice_golem_idle.gif",
-            "skills": [
-                {
-                    "name": "Glacial Strike (หมัดเยือกแข็ง)",
-                    "type": "physical",
-                    "description": "ทุบกำปั้นน้ำแข็งลงพื้นอย่างรุนแรง"
-                },
-                {
-                    "name": "Blizzard Wave (คลื่นหิมะพัดกระหน่ำ)",
-                    "type": "magic",
-                    "description": "ปล่อยคลื่นลมหนาวแช่แข็งเป้าหมาย"
-                },
-                {
-                    "name": "Icicle Rain (ฝนเข็มน้ำแข็ง)",
-                    "type": "piercing",
-                    "description": "เรียกฝนแท่งน้ำแข็งแหลมคมตกลงมาจากฟ้า"
-                }
-            ]
+          "name": "Root Smash (ผืนรากทุบทำลาย)",
+          "type": "physical",
+          "description": "ใช้รากไม้ยักษ์ฟาดปัดกวาดพื้น"
         },
         {
-            "id": 3,
-            "name": "Fire Elemental",
-            "element": "fire",
-            "base_hp": 18000,
-            "base_def": 30,
-            "weakness": [
-                "water"
-            ],
-            "resist": [
-                "fire",
-                "nature"
-            ],
-            "image_url": "images/03_Fire elemental_idle.gif",
-            "skills": [
-                {
-                    "name": "Flame Burst (ระเบิดเพลิงร้อนแรง)",
-                    "type": "magic",
-                    "description": "ระเบิดออร่าไฟแผดเผารอบตัว"
-                },
-                {
-                    "name": "Lava Punch (หมัดลาวาทะลวง)",
-                    "type": "physical",
-                    "description": "ต่อยด้วยหมัดลาวาหลอมเหลว"
-                },
-                {
-                    "name": "Fire Whip (แส้ไฟปะทุ)",
-                    "type": "piercing",
-                    "description": "ฟาดแส้ไฟตัดผ่านการป้องกันอย่างรวดเร็ว"
-                }
-            ]
-        },
-        {
-            "id": 4,
-            "name": "Thunder Wyvern",
-            "element": "thunder",
-            "base_hp": 22000,
-            "base_def": 50,
-            "weakness": [
-                "nature"
-            ],
-            "resist": [
-                "thunder",
-                "light"
-            ],
-            "image_url": "images/04_Thunder_wyvern_idle.gif",
-            "skills": [
-                {
-                    "name": "Lightning Strike (อัสนีบาตฟาดฟัน)",
-                    "type": "magic",
-                    "description": "ผ่าสายฟ้าจากท้องฟ้าลงมากลางวง"
-                },
-                {
-                    "name": "Tail Sweep (หางกวาดปฐพี)",
-                    "type": "physical",
-                    "description": "หมุนตัวใช้หางหนามกวาดทุบผู้เล่นทั้งหมด"
-                },
-                {
-                    "name": "Sonic Screech (คำรามคลื่นเสียงความเร็วสูง)",
-                    "type": "piercing",
-                    "description": "แผดเสียงคำรามความถี่สูงกระแทกโสตประสาททะลวงการป้องกัน"
-                }
-            ]
-        },
-        {
-            "id": 5,
-            "name": "Water Serpent",
-            "element": "water",
-            "base_hp": 19000,
-            "base_def": 45,
-            "weakness": [
-                "thunder"
-            ],
-            "resist": [
-                "water",
-                "fire"
-            ],
-            "image_url": "images/05_water_serpent_idle.gif",
-            "skills": [
-                {
-                    "name": "Water Gush (กระแสน้ำพ่นทะลัก)",
-                    "type": "magic",
-                    "description": "พ่นน้ำแรงดันสูงเป็นวงกว้าง"
-                },
-                {
-                    "name": "Tidal Wave (คลื่นยักษ์ซัดสาด)",
-                    "type": "physical",
-                    "description": "สะบัดตัวสร้างคลื่นน้ำมหาศาลซัดถล่ม"
-                },
-                {
-                    "name": "Water Needle (เข็มน้ำแรงดันสูง)",
-                    "type": "piercing",
-                    "description": "พ่นกระสุนน้ำเรียวเล็กแหลมคมดั่งเข็มทะลวงเป้าหมาย"
-                }
-            ]
-        },
-        {
-            "id": 6,
-            "name": "Shadow Assassin",
-            "element": "dark",
-            "base_hp": 16000,
-            "base_def": 35,
-            "weakness": [
-                "light"
-            ],
-            "resist": [
-                "dark",
-                "poison"
-            ],
-            "image_url": "images/06_shadow_assasin_idle.gif",
-            "skills": [
-                {
-                    "name": "Shadow Strike (จู่โจมจากเงามืด)",
-                    "type": "physical",
-                    "description": "หายตัวไปปรากฏข้างหลังแล้วฟันอย่างรวดเร็ว"
-                },
-                {
-                    "name": "Void Nova (ระเบิดพลังความมืด)",
-                    "type": "magic",
-                    "description": "ปลดปล่อยระเบิดพลังงานเงามืดรอบด้าน"
-                },
-                {
-                    "name": "Dark Dagger (มีดบินรัตติกาล)",
-                    "type": "piercing",
-                    "description": "ปามีดบินอาบพลังเงาทะลวงข้ามการป้องกัน"
-                }
-            ]
-        },
-        {
-            "id": 7,
-            "name": "Stone Titan",
-            "element": "earth",
-            "base_hp": 30000,
-            "base_def": 80,
-            "weakness": [
-                "water"
-            ],
-            "resist": [
-                "thunder",
-                "fire",
-                "earth"
-            ],
-            "image_url": "images/07_Stone_titan_idle.gif",
-            "skills": [
-                {
-                    "name": "Earthquake (ธรณีพิโรธ)",
-                    "type": "physical",
-                    "description": "กระทืบเท้าสร้างแรงสั่นสะเทือนทำลายล้างพื้นดิน"
-                },
-                {
-                    "name": "Sandstorm (พายุทรายกลืนกิน)",
-                    "type": "magic",
-                    "description": "เรียกพายุทรายพัดบดบังและเฉือนผิว"
-                },
-                {
-                    "name": "Rock Spike (เข็มหินแทงทะลุ)",
-                    "type": "piercing",
-                    "description": "เรียกเสาหินแหลมพุ่งแทงขึ้นมาจากใต้ดิน"
-                }
-            ]
-        },
-        {
-            "id": 8,
-            "name": "Poison Drake",
-            "element": "poison",
-            "base_hp": 18000,
-            "base_def": 50,
-            "weakness": [
-                "light",
-                "fire"
-            ],
-            "resist": [
-                "nature",
-                "dark",
-                "poison"
-            ],
-            "image_url": "images/08_Poison_drake_idle.gif",
-            "skills": [
-                {
-                    "name": "Venom Breath (ลมหายใจพิษ)",
-                    "type": "magic",
-                    "description": "พ่นแก๊สพิษสีม่วงเข้มปกคลุมบริเวณ"
-                },
-                {
-                    "name": "Tail Slam (หางงูยักษ์ฟาด)",
-                    "type": "physical",
-                    "description": "ใช้หางทรงพลังฟาดกวาดผู้เล่นกระเด็น"
-                },
-                {
-                    "name": "Acid Spit (พ่นกรดกัดกร่อน)",
-                    "type": "piercing",
-                    "description": "พ่นน้ำกรดเข้มข้นที่หลอมละลายทุกเกราะป้องกัน"
-                }
-            ]
-        },
-        {
-            "id": 9,
-            "name": "Crystal Golem",
-            "element": "light",
-            "base_hp": 25000,
-            "base_def": 70,
-            "weakness": [
-                "dark"
-            ],
-            "resist": [
-                "light",
-                "fire",
-                "ice"
-            ],
-            "image_url": "images/09_Crystal_golem_idle.gif",
-            "skills": [
-                {
-                    "name": "Light Beam (ลำแสงพิพากษา)",
-                    "type": "magic",
-                    "description": "ยิงแสงเลเซอร์ความร้อนสูงจากแกนกลาง"
-                },
-                {
-                    "name": "Crystal Fist (หมัดคริสตัลยักษ์)",
-                    "type": "physical",
-                    "description": "เหวี่ยงหมัดคริสตัลแข็งแกร่งทุบลงอย่างจัง"
-                },
-                {
-                    "name": "Prism Shard (เศษปริซึมแทงทะลุ)",
-                    "type": "piercing",
-                    "description": "ระเบิดเศษผลึกแก้วแหลมคมพุ่งแทงทะลุทุกสิ่ง"
-                }
-            ]
-        },
-        {
-            "id": 10,
-            "name": "Void Walker",
-            "element": "chaos",
-            "base_hp": 28000,
-            "base_def": 75,
-            "weakness": [
-                "light",
-                "dark"
-            ],
-            "resist": [
-                "fire",
-                "water",
-                "thunder",
-                "ice",
-                "nature"
-            ],
-            "image_url": "images/10_void_walker_idle.gif",
-            "skills": [
-                {
-                    "name": "Void Rift (ประตูมิติดูดกลืน)",
-                    "type": "magic",
-                    "description": "เปิดรอยแยกมิติสีดำดูดกลืนพลังงานและสิ่งมีชีวิต"
-                },
-                {
-                    "name": "Chaos Punch (หมัดโกลาหล)",
-                    "type": "physical",
-                    "description": "จู่โจมด้วยหมัดพลังงานมิติบิดเบี้ยว"
-                },
-                {
-                    "name": "Cosmic Ray (รังสีคอสมิกทะลวงฝัน)",
-                    "type": "piercing",
-                    "description": "ปล่อยเส้นแสงคอสมิกความเร็วสูงเจาะทะลวงเป้าหมาย"
-                }
-            ]
+          "name": "Thorny Vines (เถาวัลย์หนามทิ่มแทง)",
+          "type": "piercing",
+          "description": "พุ่งเถาวัลย์หนามแหลมคมเข้าเสียบทะลวง"
         }
-    ],
-    "weekly": [
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Ice Golem",
+      "element": "ice",
+      "base_hp": 20000,
+      "base_def": 60,
+      "weakness": [
+        "fire"
+      ],
+      "resist": [
+        "water",
+        "ice"
+      ],
+      "image_url": "images/02_ice_golem_idle.gif",
+      "skills": [
         {
-            "id": 11,
-            "name": "Ancient Dragon",
-            "element": "fire",
-            "base_hp": 50000,
-            "base_def": 100,
-            "weakness": [
-                "water",
-                "dark"
-            ],
-            "resist": [
-                "fire",
-                "nature",
-                "light"
-            ],
-            "image_url": "images/11_Ancient Dragon.gif",
-            "skills": [
-                {
-                    "name": "Dragon Breath (ลมหายใจมังกรโบราณ)",
-                    "type": "magic",
-                    "description": "พ่นคลื่นเพลิงมหาศาลละลายศัตรูทั้งหมด"
-                },
-                {
-                    "name": "Wing Claw Bash (กรงเล็บปีกตะปบ)",
-                    "type": "physical",
-                    "description": "ตบศัตรูเบื้องหน้าด้วยกรงเล็บและปีกยักษ์"
-                },
-                {
-                    "name": "Tail Crush (หางยักษ์ทุบทำลาย)",
-                    "type": "physical",
-                    "description": "ฟาดหางเหล็กกล้าทับทำลายทุกสิ่งที่ขวางทาง"
-                },
-                {
-                    "name": "Flame Pillar (เสาเพลิงปะทุทะลวงฟ้า)",
-                    "type": "piercing",
-                    "description": "ระเบิดลาวาขึ้นมาเป็นเสาเพลิงเจาะทะลวงขึ้นสู่ท้องฟ้า"
-                }
-            ]
+          "name": "Glacial Strike (หมัดเยือกแข็ง)",
+          "type": "physical",
+          "description": "ทุบกำปั้นน้ำแข็งลงพื้นอย่างรุนแรง"
         },
         {
-            "id": 12,
-            "name": "Frost Giant King",
-            "element": "ice",
-            "base_hp": 55000,
-            "base_def": 120,
-            "weakness": [
-                "fire",
-                "thunder"
-            ],
-            "resist": [
-                "water",
-                "ice",
-                "nature"
-            ],
-            "image_url": "images/12_Frost Giant King.gif",
-            "skills": [
-                {
-                    "name": "Glacial Hammer (ค้อนยักษ์เยือกแข็ง)",
-                    "type": "physical",
-                    "description": "ฟาดค้อนเยือกแข็งลงมาบดขยี้ปาร์ตี้"
-                },
-                {
-                    "name": "Frost Nova (ระเบิดไอเย็นสุดขั้ว)",
-                    "type": "magic",
-                    "description": "ระเบิดออร่าความเย็นยะเยือกแช่แข็งร่างกายศัตรู"
-                },
-                {
-                    "name": "Icicle Barrage (ห่าฝนเข็มน้ำแข็ง)",
-                    "type": "piercing",
-                    "description": "ระดมยิงหอกน้ำแข็งนับร้อยกระหน่ำแทงทะลวงเกราะ"
-                },
-                {
-                    "name": "Avalanche (หิมะถล่มทับถม)",
-                    "type": "physical",
-                    "description": "เรียกหิมะและหินผาถล่มลงมาทับผู้เล่นทั้งหมด"
-                }
-            ]
+          "name": "Blizzard Wave (คลื่นหิมะพัดกระหน่ำ)",
+          "type": "magic",
+          "description": "ปล่อยคลื่นลมหนาวแช่แข็งเป้าหมาย"
         },
         {
-            "id": 13,
-            "name": "Lightning Phoenix",
-            "element": "thunder",
-            "base_hp": 48000,
-            "base_def": 90,
-            "weakness": [
-                "nature",
-                "dark"
-            ],
-            "resist": [
-                "thunder",
-                "light",
-                "fire"
-            ],
-            "image_url": "images/13_Lightning Phoenix.gif",
-            "skills": [
-                {
-                    "name": "Electro Flare (ระเบิดเพลิงสายฟ้า)",
-                    "type": "magic",
-                    "description": "สร้างลูกบอลเพลิงไฟฟ้าแรงสูงระเบิดใส่ปาร์ตี้"
-                },
-                {
-                    "name": "Sonic Slash (ปีกสายฟ้าฟาดฟัน)",
-                    "type": "physical",
-                    "description": "กระพือปีกส่งคลื่นลมไฟฟ้าตัดฉีกร่างศัตรู"
-                },
-                {
-                    "name": "Thunder Bolt (อัสนีบาตเสียดฟ้า)",
-                    "type": "piercing",
-                    "description": "ผ่าสายฟ้าแรงสูงเฉพาะเจาะจงเจาะทะลวงผ่านการป้องกัน"
-                },
-                {
-                    "name": "Volt Storm (พายุไฟฟ้าพัดกระหน่ำ)",
-                    "type": "magic",
-                    "description": "สร้างพายุสายฟ้าโหมกระหน่ำไม่ขาดสาย"
-                }
-            ]
-        },
-        {
-            "id": 14,
-            "name": "Abyssal Kraken",
-            "element": "water",
-            "base_hp": 60000,
-            "base_def": 110,
-            "weakness": [
-                "thunder",
-                "light"
-            ],
-            "resist": [
-                "water",
-                "ice",
-                "dark"
-            ],
-            "image_url": "images/14_abyssal kraken.gif",
-            "skills": [
-                {
-                    "name": "Tentacle Smash (หนวดกวาดทำลาย)",
-                    "type": "physical",
-                    "description": "ใช้หนวดยักษ์ฟาดกวาดทำลายกวาดล้างศัตรู"
-                },
-                {
-                    "name": "Abyssal Torrent (กระแสน้ำวนห้วงลึก)",
-                    "type": "magic",
-                    "description": "สร้างน้ำวนขนาดยักษ์กลืนกินผู้เล่นทุกคน"
-                },
-                {
-                    "name": "Tidal Wave (คลื่นมหาศาลกลืนเมือง)",
-                    "type": "physical",
-                    "description": "เรียกมวลน้ำยักษ์สูงเสียดฟ้าพัดถล่มอย่างไร้ปรานี"
-                },
-                {
-                    "name": "Water Jet (กระสุนน้ำแรงดันสูงทะลวงโบราณ)",
-                    "type": "piercing",
-                    "description": "ยิงลำแสงน้ำแรงดันเจาะลึกทะลวงทลวงเกราะเหล็ก"
-                }
-            ]
+          "name": "Icicle Rain (ฝนเข็มน้ำแข็ง)",
+          "type": "piercing",
+          "description": "เรียกฝนแท่งน้ำแข็งแหลมคมตกลงมาจากฟ้า"
         }
-    ],
-    "monthly": [
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Fire Elemental",
+      "element": "fire",
+      "base_hp": 18000,
+      "base_def": 30,
+      "weakness": [
+        "water"
+      ],
+      "resist": [
+        "fire",
+        "nature"
+      ],
+      "image_url": "images/03_Fire elemental_idle.gif",
+      "skills": [
         {
-            "id": 15,
-            "name": "Primordial Titan",
-            "element": "all",
-            "base_hp": 100000,
-            "base_def": 180,
-            "weakness": [],
-            "resist": [
-                "fire",
-                "water",
-                "thunder",
-                "ice",
-                "nature",
-                "dark",
-                "light"
-            ],
-            "image_url": "images/15_Primordial Titan.gif",
-            "skills": [
-                {
-                    "name": "Genesis Wave (คลื่นพลังสร้างโลก)",
-                    "type": "magic",
-                    "description": "ปลดปล่อยพลังงานต้นกำเนิดจักรวาลเป็นระลอกกว้าง"
-                },
-                {
-                    "name": "World Breaker (หมัดทำลายล้างพิภพ)",
-                    "type": "physical",
-                    "description": "กระแทกหมัดที่ทรงพลังพอจะทำลายล้างทวีปได้"
-                },
-                {
-                    "name": "Meteor Rain (อุกกาบาตล่มสลาย)",
-                    "type": "magic",
-                    "description": "อัญเชิญเศษดาวเคราะห์พุ่งชนทำลายล้างเป้าหมายทั้งหมด"
-                },
-                {
-                    "name": "Cosmic Spear (หอกแสงคอสมิกทะลวงมิติ)",
-                    "type": "piercing",
-                    "description": "ซัดหอกแสงคอสมิกทะลุมิติพุ่งเจาะทลวงอย่างไร้ทางขัดขวาง"
-                },
-                {
-                    "name": "Elemental Cataclysm (ภัยพิบัติธาตุประสาน)",
-                    "type": "magic",
-                    "description": "ปลดปล่อยพลังธาตุทั้งเจ็ดสายรวมกันเป็นความหายนะครั้งใหญ่"
-                }
-            ]
+          "name": "Flame Burst (ระเบิดเพลิงร้อนแรง)",
+          "type": "magic",
+          "description": "ระเบิดออร่าไฟแผดเผารอบตัว"
+        },
+        {
+          "name": "Lava Punch (หมัดลาวาทะลวง)",
+          "type": "physical",
+          "description": "ต่อยด้วยหมัดลาวาหลอมเหลว"
+        },
+        {
+          "name": "Fire Whip (แส้ไฟปะทุ)",
+          "type": "piercing",
+          "description": "ฟาดแส้ไฟตัดผ่านการป้องกันอย่างรวดเร็ว"
         }
-    ]
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Thunder Wyvern",
+      "element": "thunder",
+      "base_hp": 22000,
+      "base_def": 50,
+      "weakness": [
+        "nature"
+      ],
+      "resist": [
+        "thunder",
+        "light"
+      ],
+      "image_url": "images/04_Thunder_wyvern_idle.gif",
+      "skills": [
+        {
+          "name": "Lightning Strike (อัสนีบาตฟาดฟัน)",
+          "type": "magic",
+          "description": "ผ่าสายฟ้าจากท้องฟ้าลงมากลางวง"
+        },
+        {
+          "name": "Tail Sweep (หางกวาดปฐพี)",
+          "type": "physical",
+          "description": "หมุนตัวใช้หางหนามกวาดทุบผู้เล่นทั้งหมด"
+        },
+        {
+          "name": "Sonic Screech (คำรามคลื่นเสียงความเร็วสูง)",
+          "type": "piercing",
+          "description": "แผดเสียงคำรามความถี่สูงกระแทกโสตประสาททะลวงการป้องกัน"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Water Serpent",
+      "element": "water",
+      "base_hp": 19000,
+      "base_def": 45,
+      "weakness": [
+        "thunder"
+      ],
+      "resist": [
+        "water",
+        "fire"
+      ],
+      "image_url": "images/05_water_serpent_idle.gif",
+      "skills": [
+        {
+          "name": "Water Gush (กระแสน้ำพ่นทะลัก)",
+          "type": "magic",
+          "description": "พ่นน้ำแรงดันสูงเป็นวงกว้าง"
+        },
+        {
+          "name": "Tidal Wave (คลื่นยักษ์ซัดสาด)",
+          "type": "physical",
+          "description": "สะบัดตัวสร้างคลื่นน้ำมหาศาลซัดถล่ม"
+        },
+        {
+          "name": "Water Needle (เข็มน้ำแรงดันสูง)",
+          "type": "piercing",
+          "description": "พ่นกระสุนน้ำเรียวเล็กแหลมคมดั่งเข็มทะลวงเป้าหมาย"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Shadow Assassin",
+      "element": "dark",
+      "base_hp": 16000,
+      "base_def": 35,
+      "weakness": [
+        "light"
+      ],
+      "resist": [
+        "dark",
+        "poison"
+      ],
+      "image_url": "images/06_shadow_assasin_idle.gif",
+      "skills": [
+        {
+          "name": "Shadow Strike (จู่โจมจากเงามืด)",
+          "type": "physical",
+          "description": "หายตัวไปปรากฏข้างหลังแล้วฟันอย่างรวดเร็ว"
+        },
+        {
+          "name": "Void Nova (ระเบิดพลังความมืด)",
+          "type": "magic",
+          "description": "ปลดปล่อยระเบิดพลังงานเงามืดรอบด้าน"
+        },
+        {
+          "name": "Dark Dagger (มีดบินรัตติกาล)",
+          "type": "piercing",
+          "description": "ปามีดบินอาบพลังเงาทะลวงข้ามการป้องกัน"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "Stone Titan",
+      "element": "earth",
+      "base_hp": 30000,
+      "base_def": 80,
+      "weakness": [
+        "water"
+      ],
+      "resist": [
+        "thunder",
+        "fire",
+        "earth"
+      ],
+      "image_url": "images/07_Stone_titan_idle.gif",
+      "skills": [
+        {
+          "name": "Earthquake (ธรณีพิโรธ)",
+          "type": "physical",
+          "description": "กระทืบเท้าสร้างแรงสั่นสะเทือนทำลายล้างพื้นดิน"
+        },
+        {
+          "name": "Sandstorm (พายุทรายกลืนกิน)",
+          "type": "magic",
+          "description": "เรียกพายุทรายพัดบดบังและเฉือนผิว"
+        },
+        {
+          "name": "Rock Spike (เข็มหินแทงทะลุ)",
+          "type": "piercing",
+          "description": "เรียกเสาหินแหลมพุ่งแทงขึ้นมาจากใต้ดิน"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "name": "Poison Drake",
+      "element": "poison",
+      "base_hp": 18000,
+      "base_def": 50,
+      "weakness": [
+        "light",
+        "fire"
+      ],
+      "resist": [
+        "nature",
+        "dark",
+        "poison"
+      ],
+      "image_url": "images/08_Poison_drake_idle.gif",
+      "skills": [
+        {
+          "name": "Venom Breath (ลมหายใจพิษ)",
+          "type": "magic",
+          "description": "พ่นแก๊สพิษสีม่วงเข้มปกคลุมบริเวณ"
+        },
+        {
+          "name": "Tail Slam (หางงูยักษ์ฟาด)",
+          "type": "physical",
+          "description": "ใช้หางทรงพลังฟาดกวาดผู้เล่นกระเด็น"
+        },
+        {
+          "name": "Acid Spit (พ่นกรดกัดกร่อน)",
+          "type": "piercing",
+          "description": "พ่นน้ำกรดเข้มข้นที่หลอมละลายทุกเกราะป้องกัน"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "name": "Crystal Golem",
+      "element": "light",
+      "base_hp": 25000,
+      "base_def": 70,
+      "weakness": [
+        "dark"
+      ],
+      "resist": [
+        "light",
+        "fire",
+        "ice"
+      ],
+      "image_url": "images/09_Crystal_golem_idle.gif",
+      "skills": [
+        {
+          "name": "Light Beam (ลำแสงพิพากษา)",
+          "type": "magic",
+          "description": "ยิงแสงเลเซอร์ความร้อนสูงจากแกนกลาง"
+        },
+        {
+          "name": "Crystal Fist (หมัดคริสตัลยักษ์)",
+          "type": "physical",
+          "description": "เหวี่ยงหมัดคริสตัลแข็งแกร่งทุบลงอย่างจัง"
+        },
+        {
+          "name": "Prism Shard (เศษปริซึมแทงทะลุ)",
+          "type": "piercing",
+          "description": "ระเบิดเศษผลึกแก้วแหลมคมพุ่งแทงทะลุทุกสิ่ง"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "name": "Void Walker",
+      "element": "chaos",
+      "base_hp": 28000,
+      "base_def": 75,
+      "weakness": [
+        "light",
+        "dark"
+      ],
+      "resist": [
+        "fire",
+        "water",
+        "thunder",
+        "ice",
+        "nature"
+      ],
+      "image_url": "images/10_void_walker_idle.gif",
+      "skills": [
+        {
+          "name": "Void Rift (ประตูมิติดูดกลืน)",
+          "type": "magic",
+          "description": "เปิดรอยแยกมิติสีดำดูดกลืนพลังงานและสิ่งมีชีวิต"
+        },
+        {
+          "name": "Chaos Punch (หมัดโกลาหล)",
+          "type": "physical",
+          "description": "จู่โจมด้วยหมัดพลังงานมิติบิดเบี้ยว"
+        },
+        {
+          "name": "Cosmic Ray (รังสีคอสมิกทะลวงฝัน)",
+          "type": "piercing",
+          "description": "ปล่อยเส้นแสงคอสมิกความเร็วสูงเจาะทะลวงเป้าหมาย"
+        }
+      ]
+    }
+  ],
+  "weekly": [
+    {
+      "id": 11,
+      "name": "Ancient Dragon",
+      "element": "fire",
+      "base_hp": 50000,
+      "base_def": 100,
+      "weakness": [
+        "water",
+        "dark"
+      ],
+      "resist": [
+        "fire",
+        "nature",
+        "light"
+      ],
+      "image_url": "images/11_Ancient Dragon.gif",
+      "skills": [
+        {
+          "name": "Dragon Breath (ลมหายใจมังกรโบราณ)",
+          "type": "magic",
+          "description": "พ่นคลื่นเพลิงมหาศาลละลายศัตรูทั้งหมด"
+        },
+        {
+          "name": "Wing Claw Bash (กรงเล็บปีกตะปบ)",
+          "type": "physical",
+          "description": "ตบศัตรูเบื้องหน้าด้วยกรงเล็บและปีกยักษ์"
+        },
+        {
+          "name": "Tail Crush (หางยักษ์ทุบทำลาย)",
+          "type": "physical",
+          "description": "ฟาดหางเหล็กกล้าทับทำลายทุกสิ่งที่ขวางทาง"
+        },
+        {
+          "name": "Flame Pillar (เสาเพลิงปะทุทะลวงฟ้า)",
+          "type": "piercing",
+          "description": "ระเบิดลาวาขึ้นมาเป็นเสาเพลิงเจาะทะลวงขึ้นสู่ท้องฟ้า"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "name": "Frost Giant King",
+      "element": "ice",
+      "base_hp": 55000,
+      "base_def": 120,
+      "weakness": [
+        "fire",
+        "thunder"
+      ],
+      "resist": [
+        "water",
+        "ice",
+        "nature"
+      ],
+      "image_url": "images/12_Frost Giant King.gif",
+      "skills": [
+        {
+          "name": "Glacial Hammer (ค้อนยักษ์เยือกแข็ง)",
+          "type": "physical",
+          "description": "ฟาดค้อนเยือกแข็งลงมาบดขยี้ปาร์ตี้"
+        },
+        {
+          "name": "Frost Nova (ระเบิดไอเย็นสุดขั้ว)",
+          "type": "magic",
+          "description": "ระเบิดออร่าความเย็นยะเยือกแช่แข็งร่างกายศัตรู"
+        },
+        {
+          "name": "Icicle Barrage (ห่าฝนเข็มน้ำแข็ง)",
+          "type": "piercing",
+          "description": "ระดมยิงหอกน้ำแข็งนับร้อยกระหน่ำแทงทะลวงเกราะ"
+        },
+        {
+          "name": "Avalanche (หิมะถล่มทับถม)",
+          "type": "physical",
+          "description": "เรียกหิมะและหินผาถล่มลงมาทับผู้เล่นทั้งหมด"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "name": "Lightning Phoenix",
+      "element": "thunder",
+      "base_hp": 48000,
+      "base_def": 90,
+      "weakness": [
+        "nature",
+        "dark"
+      ],
+      "resist": [
+        "thunder",
+        "light",
+        "fire"
+      ],
+      "image_url": "images/13_Lightning Phoenix.gif",
+      "skills": [
+        {
+          "name": "Electro Flare (ระเบิดเพลิงสายฟ้า)",
+          "type": "magic",
+          "description": "สร้างลูกบอลเพลิงไฟฟ้าแรงสูงระเบิดใส่ปาร์ตี้"
+        },
+        {
+          "name": "Sonic Slash (ปีกสายฟ้าฟาดฟัน)",
+          "type": "physical",
+          "description": "กระพือปีกส่งคลื่นลมไฟฟ้าตัดฉีกร่างศัตรู"
+        },
+        {
+          "name": "Thunder Bolt (อัสนีบาตเสียดฟ้า)",
+          "type": "piercing",
+          "description": "ผ่าสายฟ้าแรงสูงเฉพาะเจาะจงเจาะทะลวงผ่านการป้องกัน"
+        },
+        {
+          "name": "Volt Storm (พายุไฟฟ้าพัดกระหน่ำ)",
+          "type": "magic",
+          "description": "สร้างพายุสายฟ้าโหมกระหน่ำไม่ขาดสาย"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "name": "Abyssal Kraken",
+      "element": "water",
+      "base_hp": 60000,
+      "base_def": 110,
+      "weakness": [
+        "thunder",
+        "light"
+      ],
+      "resist": [
+        "water",
+        "ice",
+        "dark"
+      ],
+      "image_url": "images/14_abyssal kraken.gif",
+      "skills": [
+        {
+          "name": "Tentacle Smash (หนวดกวาดทำลาย)",
+          "type": "physical",
+          "description": "ใช้หนวดยักษ์ฟาดกวาดทำลายกวาดล้างศัตรู"
+        },
+        {
+          "name": "Abyssal Torrent (กระแสน้ำวนห้วงลึก)",
+          "type": "magic",
+          "description": "สร้างน้ำวนขนาดยักษ์กลืนกินผู้เล่นทุกคน"
+        },
+        {
+          "name": "Tidal Wave (คลื่นมหาศาลกลืนเมือง)",
+          "type": "physical",
+          "description": "เรียกมวลน้ำยักษ์สูงเสียดฟ้าพัดถล่มอย่างไร้ปรานี"
+        },
+        {
+          "name": "Water Jet (กระสุนน้ำแรงดันสูงทะลวงโบราณ)",
+          "type": "piercing",
+          "description": "ยิงลำแสงน้ำแรงดันเจาะลึกทะลวงทลวงเกราะเหล็ก"
+        }
+      ]
+    }
+  ],
+  "monthly": [
+    {
+      "id": 15,
+      "name": "Primordial Titan",
+      "element": "all",
+      "base_hp": 100000,
+      "base_def": 180,
+      "weakness": [],
+      "resist": [
+        "fire",
+        "water",
+        "thunder",
+        "ice",
+        "nature",
+        "dark",
+        "light"
+      ],
+      "image_url": "images/15_Primordial Titan.gif",
+      "skills": [
+        {
+          "name": "Genesis Wave (คลื่นพลังสร้างโลก)",
+          "type": "magic",
+          "description": "ปลดปล่อยพลังงานต้นกำเนิดจักรวาลเป็นระลอกกว้าง"
+        },
+        {
+          "name": "World Breaker (หมัดทำลายล้างพิภพ)",
+          "type": "physical",
+          "description": "กระแทกหมัดที่ทรงพลังพอจะทำลายล้างทวีปได้"
+        },
+        {
+          "name": "Meteor Rain (อุกกาบาตล่มสลาย)",
+          "type": "magic",
+          "description": "อัญเชิญเศษดาวเคราะห์พุ่งชนทำลายล้างเป้าหมายทั้งหมด"
+        },
+        {
+          "name": "Cosmic Spear (หอกแสงคอสมิกทะลวงมิติ)",
+          "type": "piercing",
+          "description": "ซัดหอกแสงคอสมิกทะลุมิติพุ่งเจาะทลวงอย่างไร้ทางขัดขวาง"
+        },
+        {
+          "name": "Elemental Cataclysm (ภัยพิบัติธาตุประสาน)",
+          "type": "magic",
+          "description": "ปลดปล่อยพลังธาตุทั้งเจ็ดสายรวมกันเป็นความหายนะครั้งใหญ่"
+        }
+      ]
+    }
+  ]
 }

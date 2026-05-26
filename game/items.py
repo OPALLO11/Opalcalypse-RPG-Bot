@@ -1,7 +1,7 @@
 import random
-import json
-from .logic import ITEMS
+
 from .enhancement import give_item_or_enhance
+from .logic import ITEMS
 
 
 def roll_item(tier):
@@ -10,10 +10,10 @@ def roll_item(tier):
         items_in_tier = ITEMS.get(cat, {}).get(tier, [])
         for item in items_in_tier:
             pool.append((item, item.get('drop_weight', 10)))
-            
+
     if not pool:
         return None
-        
+
     total_weight = sum(w for _, w in pool)
     r = random.uniform(0, total_weight)
     upto = 0
@@ -32,21 +32,24 @@ def distribute_loot(boss_name, participants_list):
     """
     results = {}
     base_rates = {'SSR': 0.05, 'SR': 0.30, 'R': 0.65}
-    
+
     for p in participants_list:
         pid = p['id']
         rank = p['rank']
-        
+
         mult = 1.0
-        if rank == 1: mult = 2.0
-        elif rank <= 3: mult = 1.5
-        elif rank <= 5: mult = 1.2
-        
+        if rank == 1:
+            mult = 2.0
+        elif rank <= 3:
+            mult = 1.5
+        elif rank <= 5:
+            mult = 1.2
+
         roll_val = random.random()
-        
+
         ssr_chance = base_rates['SSR'] * mult
         sr_chance = base_rates['SR'] * mult + ssr_chance
-        
+
         tier_won = None
         if roll_val <= ssr_chance:
             tier_won = 'SSR'
@@ -54,7 +57,7 @@ def distribute_loot(boss_name, participants_list):
             tier_won = 'SR'
         elif roll_val <= (base_rates['R'] * mult + sr_chance):
             tier_won = 'R'
-            
+
         if tier_won:
             item = roll_item(tier_won)
             if item:

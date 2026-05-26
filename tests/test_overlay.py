@@ -1,7 +1,9 @@
-import requests
 import time
 
+import requests
+
 OVERLAY_URL = "http://127.0.0.1:5000/internal/emit"
+
 
 def emit(event, data):
     try:
@@ -9,6 +11,7 @@ def emit(event, data):
         print(f"Sent {event} - Status: {resp.status_code}")
     except Exception as e:
         print(f"Error connecting to overlay: {e}")
+
 
 if __name__ == "__main__":
     print('Testing Boss Spawn...')
@@ -32,7 +35,7 @@ if __name__ == "__main__":
         "is_crit": False
     })
     time.sleep(1)
-    
+
     boss_data["current_hp"] -= 150
     emit("boss_update", boss_data)
     time.sleep(1)
@@ -44,7 +47,7 @@ if __name__ == "__main__":
         "damage": 450,
         "is_crit": True
     })
-    
+
     boss_data["current_hp"] -= 450
     emit("boss_update", boss_data)
     time.sleep(2)
@@ -106,6 +109,6 @@ if __name__ == "__main__":
         "username": "viewer99",
         "bits": 500,
         "prompt": "A magical forest with floating crystals",
-        "image_url": "https://placehold.co/600x400/png" # Dummy image
+        "image_url": "https://placehold.co/600x400/png"  # Dummy image
     })
     print("Test complete! Check your browser window.")

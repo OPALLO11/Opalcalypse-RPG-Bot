@@ -1,24 +1,26 @@
 import datetime
 import random
-import math
+
 from database import db
-from .logic import calculate_player_stats, get_element_multiplier, CLASSES
-from .boss_manager import boss_manager
-from .items import distribute_loot
-from .helpers import find_item_data, get_level_requirement
 from utils import emit_to_overlay
+from .boss_manager import boss_manager
+from .helpers import find_item_data, get_level_requirement
+from .items import distribute_loot
+from .logic import calculate_player_stats, get_element_multiplier, CLASSES
 
 # Global player activity and buff tracking
 LAST_ACTIVE = {}  # player_id -> datetime
 PLAYER_BUFFS = {}  # player_id -> {buff_name: (value, expires_at)}
 
 import sys
+
 if 'game.combat' in sys.modules:
     _old_combat = sys.modules['game.combat']
     if hasattr(_old_combat, 'LAST_ACTIVE'):
         LAST_ACTIVE = _old_combat.LAST_ACTIVE
     if hasattr(_old_combat, 'PLAYER_BUFFS'):
         PLAYER_BUFFS = _old_combat.PLAYER_BUFFS
+
 
 def get_player_buff(player_id, buff_name):
     buffs = PLAYER_BUFFS.get(player_id, {})
@@ -30,10 +32,12 @@ def get_player_buff(player_id, buff_name):
             del buffs[buff_name]
     return None
 
+
 def set_player_buff(player_id, buff_name, value, seconds):
     if player_id not in PLAYER_BUFFS:
         PLAYER_BUFFS[player_id] = {}
     PLAYER_BUFFS[player_id][buff_name] = (value, datetime.datetime.now() + datetime.timedelta(seconds=seconds))
+
 
 def check_cooldown(player_id, action):
     expires_at_iso = db.get_cooldown(player_id, action)
@@ -43,57 +47,59 @@ def check_cooldown(player_id, action):
             return False, (expires_at - datetime.datetime.now()).total_seconds()
     return True, 0
 
+
 def set_cooldown(player_id, action, seconds):
     expires_at = datetime.datetime.now() + datetime.timedelta(seconds=seconds)
     db.set_cooldown(player_id, action, expires_at.isoformat())
 
+
 def calculate_damage(player, boss, skill_data):
     stats = calculate_player_stats(player)
-    
+
     # Apply ATK buffs
     atk_buff = get_player_buff(player['id'], 'atk_up')
     if atk_buff:
         stats['atk'] = int(stats['atk'] * (1 + atk_buff))
-        
+
     base_dmg = stats['atk'] * skill_data.get('damage_multiplier', 1.0)
-    
+
     crit_chance = stats['crit_chance'] + skill_data.get('bonus_crit_chance', 0.0)
-    
+
     # Apply Crit buffs
     crit_buff = get_player_buff(player['id'], 'crit_up')
     if crit_buff:
         crit_chance += crit_buff
-        
+
     is_crit = False
-    
+
     player_class = player.get('class', 'warrior').lower()
-    
+
     if player_class == 'rogue' and (boss['current_hp'] / boss['max_hp']) < 0.3:
         crit_multiplier = 3.0
     elif player_class == 'rogue':
         crit_multiplier = 2.0
     else:
         crit_multiplier = 1.5
-        
+
     if skill_data.get('guaranteed_crit'):
         is_crit = True
     elif random.random() < crit_chance:
         is_crit = True
-        
+
     if is_crit:
         base_dmg *= crit_multiplier
-        
+
     elem = skill_data.get('type', 'physical').replace('magic_', '')
     if elem in ['physical', 'magic', 'magic_aoe']:
         elem = stats.get('element')
-        
+
     elem_mult = get_element_multiplier(elem, boss['weakness'], boss['resist'])
     base_dmg *= elem_mult
-    
+
     if player_class == 'mage' and skill_data['name'] not in ('Basic Attack', 'Magic Bolt'):
         # Mage passive skill damage bonus
         base_dmg *= 1.30
-        
+
     # Calculate boss defense
     participants = boss.get('participants', [])
     if participants:
@@ -105,11 +111,12 @@ def calculate_damage(player, boss, skill_data):
         avg_lvl = total_lvl / len(participants)
     else:
         avg_lvl = 1
-        
+
     boss_def = boss.get('base_def', 0) + int(avg_lvl * 10)
-    
+
     final_dmg = max(10, int(base_dmg) - boss_def)
     return final_dmg, is_crit
+
 
 def log_combat(boss_instance_id, player_id, action, damage, is_crit):
     db.add_combat_log(boss_instance_id, player_id, action, damage, is_crit)
@@ -122,6 +129,7 @@ def log_combat(boss_instance_id, player_id, action, damage, is_crit):
     except Exception as e:
         print(f"Error tracking combat challenge progress: {e}")
 
+
 def get_party_data(boss):
     if not boss:
         return []
@@ -131,21 +139,21 @@ def get_party_data(boss):
         pdata = db.get_player_by_id(pid)
         if pdata:
             stats = calculate_player_stats(pdata)
-            
+
             can_act, cd = check_cooldown(pid, 'respawn')
             is_dead = not can_act
-            
+
             current_hp = 0 if is_dead else pdata['hp']
-            
+
             is_defending = False
             boss_state = boss_manager.boss_state.get(boss['instance_id'])
             if boss_state:
                 is_defending = pid in boss_state.get('defending_players', set())
-                
+
             icon_map = {'warrior': '⚔️', 'mage': '🔮', 'rogue': '🗡️', 'priest': '💖'}
             cls = pdata.get('class', 'warrior').lower()
             icon = icon_map.get(cls, '⚔️')
-            
+
             party.append({
                 'id': pdata['id'],
                 'username': pdata['username'],
@@ -161,6 +169,7 @@ def get_party_data(boss):
                 'is_defending': is_defending
             })
     return party
+
 
 def _validate_and_resolve_skill(player, action_type, skill_name, cls_name, cls_data):
     """
@@ -240,7 +249,8 @@ def _validate_and_resolve_skill(player, action_type, skill_name, cls_name, cls_d
         cooldown_action_key = f"skill_{skill_name}"
         can_act, cd = check_cooldown(player['id'], cooldown_action_key)
         if not can_act:
-            return None, {'success': False, 'message': f"\u0e2a\u0e01\u0e34\u0e25 {skill_data.get('name', skill_name)} \u0e22\u0e31\u0e07\u0e15\u0e34\u0e14\u0e04\u0e39\u0e25\u0e14\u0e32\u0e27\u0e19\u0e4c\u0e40\u0e2b\u0e25\u0e37\u0e2d {cd:.1f} \u0e27\u0e34\u0e19\u0e32\u0e17\u0e35"}
+            return None, {'success': False,
+                          'message': f"\u0e2a\u0e01\u0e34\u0e25 {skill_data.get('name', skill_name)} \u0e22\u0e31\u0e07\u0e15\u0e34\u0e14\u0e04\u0e39\u0e25\u0e14\u0e32\u0e27\u0e19\u0e4c\u0e40\u0e2b\u0e25\u0e37\u0e2d {cd:.1f} \u0e27\u0e34\u0e19\u0e32\u0e17\u0e35"}
 
     mp_cost = skill_data.get('mp_cost', 0)
     if player.get('mp', 0) < mp_cost:
@@ -637,16 +647,17 @@ def process_action(player, action_type, skill_name=None, target=None):
         'message': final_msg
     }
 
+
 def revive_party_members(user):
     boss = boss_manager.get_current_boss()
     if not boss:
         return False, "No active boss"
-        
+
     participants = boss.get('participants', [])
-    
+
     # Find all players with active respawn cooldowns
     rows = db.cooldowns.get_all_respawn_cooldowns()
-    
+
     dead_pids = set()
     now = datetime.datetime.now()
     for row in rows:
@@ -656,12 +667,12 @@ def revive_party_members(user):
                 dead_pids.add(row['player_id'])
         except Exception:
             pass
-            
+
     all_to_check = set(participants) | dead_pids
-    
+
     revived_any = False
     updated_participants = list(participants)
-    
+
     for pid in all_to_check:
         alive, _ = check_cooldown(pid, 'respawn')
         if not alive:
@@ -673,15 +684,15 @@ def revive_party_members(user):
                 revived_any = True
                 if pid not in updated_participants:
                     updated_participants.append(pid)
-                    
+
     if revived_any:
         db.update_boss(boss['instance_id'], {'participants': updated_participants})
         boss = boss_manager.get_current_boss()
-        
+
         boss_state = boss_manager.boss_state.get(boss['instance_id'])
         if boss_state and 'wipe_time' in boss_state:
             del boss_state['wipe_time']
-        
+
         emit_to_overlay('party_update', get_party_data(boss))
         emit_to_overlay('combat_event', {
             'username': '💖 Streamer.bot',
@@ -692,34 +703,35 @@ def revive_party_members(user):
         return True, "Party revived"
     return False, "No dead party members to revive"
 
+
 def revive_single_player(user, target_name):
     boss = boss_manager.get_current_boss()
     if not boss:
         return False, "No active boss"
-        
+
     clean_target = target_name.replace('@', '').strip().lower()
     p_data = db.get_player(clean_target)
     if not p_data:
         return False, f"ไม่พบผู้เล่นชื่อ {target_name}"
-        
+
     alive, cd = check_cooldown(p_data['id'], 'respawn')
     if alive:
         return False, f"{p_data['character_name'] or p_data['username']} ยังไม่ตาย!"
-        
+
     db.clear_cooldown(p_data['id'], 'respawn')
     p_stats = calculate_player_stats(p_data)
     db.update_player_hp(p_data['id'], p_stats['max_hp'])
-    
+
     participants = boss.get('participants', [])
     if p_data['id'] not in participants:
         participants.append(p_data['id'])
         db.update_boss(boss['instance_id'], {'participants': participants})
         boss = boss_manager.get_current_boss()
-        
+
     boss_state = boss_manager.boss_state.get(boss['instance_id'])
     if boss_state and 'wipe_time' in boss_state:
         del boss_state['wipe_time']
-        
+
     emit_to_overlay('party_update', get_party_data(boss))
     emit_to_overlay('combat_event', {
         'username': '💖 Streamer.bot',
@@ -729,21 +741,23 @@ def revive_single_player(user, target_name):
     })
     return True, f"Revived {p_data['character_name'] or p_data['username']}"
 
+
 async def trigger_boss_aoe_attack(boss):
     from utils import send_streamerbot_message
-    
+
     # 1. Get boss state
     boss_state = boss_manager.boss_state.get(boss['instance_id'])
     if not boss_state or not boss_state.get('is_charging'):
         return
-        
+
     # Get participants and defenders
     participants = boss.get('participants', [])
     defenders = boss_state.get('defending_players', set())
-    next_attack = boss_state.get('next_attack', {"name": "Mighty Strike", "type": "physical", "description": "โจมตีอย่างรุนแรง"})
+    next_attack = boss_state.get('next_attack',
+                                 {"name": "Mighty Strike", "type": "physical", "description": "โจมตีอย่างรุนแรง"})
     atk_name = next_attack.get('name', 'Mighty Strike')
     atk_type = next_attack.get('type', 'physical')
-    
+
     # Check if boss is taunted
     is_taunted = False
     debuffs = boss_state.get('debuffs', {})
@@ -752,7 +766,7 @@ async def trigger_boss_aoe_attack(boss):
             is_taunted = True
         else:
             del debuffs['taunt']
-            
+
     # Calculate average level for boss attack scaling
     total_lvl = 0
     for pid in participants:
@@ -760,31 +774,31 @@ async def trigger_boss_aoe_attack(boss):
         if pdata:
             total_lvl += pdata.get('level', 1)
     avg_lvl = total_lvl / max(1, len(participants))
-    
+
     base_hp = boss.get('base_hp', 15000)
     boss_atk = int(base_hp * 0.02) + int(avg_lvl * 15) + 300
-    
+
     if is_taunted:
         boss_atk = int(boss_atk * 0.70)
-        
+
     victims_info = []
     death_count = 0
     alive_count = 0
-    
+
     for p_id in participants:
         can_act, cd = check_cooldown(p_id, 'respawn')
         if not can_act:
             continue
-            
+
         p_data = db.get_player_by_id(p_id)
         if not p_data:
             continue
-            
+
         p_stats = calculate_player_stats(p_data)
         p_class = p_data.get('class', 'warrior').lower()
         p_def = p_stats['def']
         is_defending = (p_id in defenders)
-        
+
         def_penalty = False
         if is_defending:
             if atk_type == 'magic' and p_class == 'warrior':
@@ -793,21 +807,21 @@ async def trigger_boss_aoe_attack(boss):
                 def_penalty = True
             elif atk_type == 'piercing' and p_class == 'rogue':
                 def_penalty = True
-                
+
         damage_taken = 0
         status = 'hit'
-        
+
         if is_defending:
             dodge_ratios = {'rogue': 0.60, 'mage': 0.40, 'warrior': 0.20, 'priest': 0.30}
             dodge_chance = dodge_ratios.get(p_class, 0.20)
-            
+
             dodge_buff = get_player_buff(p_id, 'dodge_up')
             if dodge_buff:
                 dodge_chance += dodge_buff
-                
+
             if def_penalty and p_class in ('rogue', 'mage'):
                 dodge_chance /= 2.0
-                
+
             if random.random() < dodge_chance:
                 status = 'dodged'
                 damage_taken = 0
@@ -817,15 +831,15 @@ async def trigger_boss_aoe_attack(boss):
                 def_buff = get_player_buff(p_id, 'def_up')
                 if def_buff:
                     effective_def *= (1 + def_buff)
-                    
+
                 if p_class == 'warrior':
                     effective_def *= 3
                 elif p_class == 'priest':
                     effective_def *= 2
-                    
+
                 if def_penalty and p_class in ('warrior', 'priest'):
                     effective_def = int(effective_def * 0.5)
-                    
+
                 damage_taken = max(10, boss_atk - effective_def)
         else:
             effective_def = p_def
@@ -833,7 +847,7 @@ async def trigger_boss_aoe_attack(boss):
             if def_buff:
                 effective_def *= (1 + def_buff)
             damage_taken = max(10, boss_atk - effective_def)
-            
+
         if status != 'dodged':
             if p_class == 'warrior':
                 damage_taken = int(damage_taken * 0.8)
@@ -846,11 +860,11 @@ async def trigger_boss_aoe_attack(boss):
                 if absorbed > 0:
                     new_mp = min(p_stats['max_mp'], p_data.get('mp', 0) + int(absorbed * 0.20))
                     db.update_player(p_id, {'mp': new_mp})
-                    
+
         if damage_taken > 0:
             new_hp = max(0, p_data.get('hp', 1000) - damage_taken)
             db.update_player_hp(p_id, new_hp)
-            
+
             if new_hp <= 0:
                 status = 'dead'
                 death_count += 1
@@ -860,44 +874,49 @@ async def trigger_boss_aoe_attack(boss):
                 alive_count += 1
         else:
             alive_count += 1
-            
+
         victims_info.append({
             'username': p_data['username'],
             'status': status,
             'damage': damage_taken
         })
-        
+
     # Reset boss charge state
     boss_state['charge'] = 0
     boss_state['is_charging'] = False
     boss_state['defending_players'] = set()
     boss_state['charge_start_time'] = None
     boss_state['next_attack'] = None
-    
+
     # Process wipe
     if alive_count == 0 and len(participants) > 0:
         if 'wipe_time' not in boss_state:
             boss_state['wipe_time'] = datetime.datetime.now()
-            
+
     # Send messages
     details = []
     for v in victims_info:
         u = v['username']
         st = v['status']
-        if st == 'dodged': details.append(f"@{u} หลบพ้น")
-        elif st == 'dead': details.append(f"@{u} 💀ตาย")
-        elif st == 'blocked': details.append(f"@{u} กัน(-{v['damage']})")
-        elif st == 'ineffective': details.append(f"@{u} ป้องกันไร้ผล(-{v['damage']})")
-        else: details.append(f"@{u} โดน(-{v['damage']})")
-        
+        if st == 'dodged':
+            details.append(f"@{u} หลบพ้น")
+        elif st == 'dead':
+            details.append(f"@{u} 💀ตาย")
+        elif st == 'blocked':
+            details.append(f"@{u} กัน(-{v['damage']})")
+        elif st == 'ineffective':
+            details.append(f"@{u} ป้องกันไร้ผล(-{v['damage']})")
+        else:
+            details.append(f"@{u} โดน(-{v['damage']})")
+
     detail_msg = ", ".join(details)
     if len(detail_msg) > 300:
         detail_msg = detail_msg[:297] + "..."
-        
+
     boss_name = boss['name']
     chat_msg = f"💥 {boss_name} ใช้ท่า「{atk_name}」โจมตีหมู่! {detail_msg}"
     send_streamerbot_message(chat_msg)
-    
+
     # Emit overlay events
     emit_to_overlay('combat_event', {
         'username': boss_name,
@@ -905,12 +924,10 @@ async def trigger_boss_aoe_attack(boss):
         'damage': 'MASSIVE', 'is_crit': True,
         'boss_hp': boss['current_hp']
     })
-    
+
     emit_to_overlay('party_update', get_party_data(boss))
     return {
         'aoe_attack': True,
         'victims_info': victims_info,
         'party_wipe': (alive_count == 0 and len(participants) > 0)
     }
-
-

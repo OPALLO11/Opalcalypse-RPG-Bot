@@ -1,22 +1,25 @@
-import os
 import asyncio
-from database import db
+import os
+
 from twitchio.ext import commands
-from game.combat import process_action, get_party_data
+
+from database import db
 from game.boss_manager import boss_manager
+from game.combat import process_action, get_party_data
 from utils import emit_to_overlay
 
-class CombatCog(commands.Cog):
+
+class CombatCog(commands.Component):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     def _process_rpg_action(self, ctx: commands.Context, action: str, skill_name: str = None, target: str = None):
-        username = ctx.author.name
+        username = ctx.chatter.name
         player = db.get_player(username)
         if not player:
             asyncio.create_task(ctx.send(f"@{username} Please !register <character_name> before attacking."))
             return
-            
+
         res = process_action(player, action, skill_name=skill_name, target=target)
         if res['success']:
             if action == 'def':
@@ -29,7 +32,7 @@ class CombatCog(commands.Cog):
             else:
                 # Normal attack message
                 asyncio.create_task(ctx.send(f"@{username} {res['message']}"))
-                
+
             event_data = {
                 'username': username,
                 'action': res.get('action_name', action) if action != 'def' else f"Defend ({res.get('action_name')})",
@@ -38,7 +41,7 @@ class CombatCog(commands.Cog):
                 'boss_hp': res['boss_hp']
             }
             emit_to_overlay('combat_event', event_data)
-            
+
             boss_state = res.get('boss_state', {})
             if boss_state.get('warning'):
                 boss = boss_manager.get_current_boss()
@@ -46,13 +49,13 @@ class CombatCog(commands.Cog):
                 next_atk = boss_state.get('next_attack', {})
                 atk_name = next_atk.get('name', 'Mighty Strike')
                 atk_type = next_atk.get('type', 'physical')
-                
+
                 type_th = "กายภาพ"
                 if atk_type == "magic":
                     type_th = "เวทมนตร์"
                 elif atk_type == "piercing":
                     type_th = "ทะลวง"
-                    
+
                 asyncio.create_task(ctx.send(
                     f"⚠️ บอส {boss_name} กำลังจะใช้ท่า「{atk_name}」({type_th})! "
                     f"จะโจมตีหมู่ภายใน 20 วินาที! "
@@ -70,10 +73,10 @@ class CombatCog(commands.Cog):
                     'attack_type': atk_type,
                     'duration': 20
                 })
-            
+
             if not res.get('is_dead'):
                 emit_to_overlay('boss_update', boss_manager.get_current_boss())
-            
+
             if res.get('is_dead'):
                 # Collect loot and gold details
                 loot_data = res.get('loot', {})
@@ -81,7 +84,7 @@ class CombatCog(commands.Cog):
                 drops_text = []
                 gold_text_list = []
                 gold_rewards_detail = []
-                
+
                 # Parse gold rewards
                 if gold_rewards:
                     for p_id, amount in gold_rewards.items():
@@ -106,7 +109,7 @@ class CombatCog(commands.Cog):
                             item_name = item_doc.get('item_name', 'Unknown Item')
                             tier = item_doc.get('tier', '')
                             full_name = f"[{tier}] {item_name}" if tier else item_name
-                            
+
                             act = item_doc.get('action', 'new')
                             if act == 'new':
                                 drops_text.append(f"@{p_name} ได้ของใหม่: {full_name}")
@@ -128,7 +131,7 @@ class CombatCog(commands.Cog):
                     'drops': drops_text,
                     'gold_rewards': gold_rewards_detail
                 })
-                
+
                 # Announce in chat
                 chat_parts = ["🎉 Boss Defeated!"]
                 if gold_text_list:
@@ -137,12 +140,13 @@ class CombatCog(commands.Cog):
                     chat_parts.append("🎁 Loot drops: " + ", ".join(drops_text))
                 else:
                     chat_parts.append("🎁 Loot drops: ไม่มีใครได้ของ")
-                
+
                 asyncio.create_task(ctx.send(" | ".join(chat_parts)))
 
                 asyncio.create_task(self._coro_respawn())
         else:
-            if action == 'skill' and ("สกิลของคุณ" in res['message'] or "Your skills" in res['message'] or not skill_name):
+            if action == 'skill' and (
+                    "สกิลของคุณ" in res['message'] or "Your skills" in res['message'] or not skill_name):
                 asyncio.create_task(ctx.send(f"@{username} 📖 {res['message']}"))
             else:
                 asyncio.create_task(ctx.send(f"@{username} ❌ {res['message']}"))
@@ -171,10 +175,10 @@ class CombatCog(commands.Cog):
 
     @commands.command(name='spawn', aliases=['sp', 'spwn'])
     async def cmd_spawn(self, ctx: commands.Context, type_arg: str = 'normal'):
-        if not ctx.author.is_mod and ctx.author.name.lower() != os.environ.get('TWITCH_CHANNEL', '').lower():
-            await ctx.send(f"@{ctx.author.name} ❌ You are not allowed to use this command!")
+        if not ctx.chatter.is_mod and ctx.chatter.name.lower() != os.environ.get('TWITCH_CHANNEL', '').lower():
+            await ctx.send(f"@{ctx.chatter.name} ❌ You are not allowed to use this command!")
             return
-            
+
         boss = boss_manager.spawn_boss(1, boss_type=type_arg.lower())
         if boss:
             emit_to_overlay('boss_update', boss)
@@ -185,10 +189,10 @@ class CombatCog(commands.Cog):
 
     @commands.command(name='resetchallenge')
     async def cmd_resetchallenge(self, ctx: commands.Context):
-        if not ctx.author.is_mod and ctx.author.name.lower() != os.environ.get('TWITCH_CHANNEL', '').lower():
-            await ctx.send(f"@{ctx.author.name} ❌ You are not allowed to use this command!")
+        if not ctx.chatter.is_mod and ctx.chatter.name.lower() != os.environ.get('TWITCH_CHANNEL', '').lower():
+            await ctx.send(f"@{ctx.chatter.name} ❌ You are not allowed to use this command!")
             return
-            
+
         from game.challenge_manager import spawn_challenge
         new_challenge = spawn_challenge()
         if new_challenge:
@@ -196,5 +200,6 @@ class CombatCog(commands.Cog):
         else:
             await ctx.send("Failed to spawn new challenge.")
 
-def prepare(bot: commands.Bot):
-    bot.add_cog(CombatCog(bot))
+
+async def prepare(bot: commands.Bot):
+    await bot.add_component(CombatCog(bot))

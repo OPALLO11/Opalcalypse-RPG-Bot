@@ -1,9 +1,8 @@
-import sys
-import os
-import unittest
-import json
-import datetime
 import asyncio
+import datetime
+import os
+import sys
+import unittest
 
 # Add root folder to python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -11,14 +10,16 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from database import db
 from game.boss_manager import boss_manager
 from game.combat import process_action, trigger_boss_aoe_attack
-from game.logic import calculate_player_stats, CLASSES
+from game.logic import CLASSES
+
 
 class TestRPGChanges(unittest.TestCase):
     def setUp(self):
         # Clean up database test players
         conn = db.get_connection()
         try:
-            conn.execute("DELETE FROM players WHERE username LIKE 'test_user_%' OR twitch_id = '9999' OR username = 'test_new_user'")
+            conn.execute(
+                "DELETE FROM players WHERE username LIKE 'test_user_%' OR twitch_id = '9999' OR username = 'test_new_user'")
             conn.commit()
         finally:
             conn.close()
@@ -33,7 +34,8 @@ class TestRPGChanges(unittest.TestCase):
     def tearDown(self):
         conn = db.get_connection()
         try:
-            conn.execute("DELETE FROM players WHERE username LIKE 'test_user_%' OR twitch_id = '9999' OR username = 'test_new_user'")
+            conn.execute(
+                "DELETE FROM players WHERE username LIKE 'test_user_%' OR twitch_id = '9999' OR username = 'test_new_user'")
             conn.commit()
         finally:
             conn.close()
@@ -45,15 +47,17 @@ class TestRPGChanges(unittest.TestCase):
             def __init__(self, name):
                 self.name = name
                 self.id = "9999"
+
         class MockContext:
             def __init__(self):
                 self.author = MockAuthor("test_user_new")
                 self.sent_messages = []
+
             async def send(self, msg):
                 self.sent_messages.append(msg)
-                
+
         info_cog = InfoCog(None)
-        
+
         # Scenario 1: missing class (only name)
         ctx = MockContext()
         asyncio.run(info_cog.cmd_register._callback(info_cog, ctx, "John"))
@@ -82,14 +86,15 @@ class TestRPGChanges(unittest.TestCase):
 
         # 2. Spawn a boss
         boss = boss_manager.spawn_boss(1, boss_type='1')
-        db.update_boss(boss['instance_id'], {'base_hp': 10000, 'max_hp': 10000, 'current_hp': 10000, 'participants': [self.priest['id'], self.warrior['id']]})
+        db.update_boss(boss['instance_id'], {'base_hp': 10000, 'max_hp': 10000, 'current_hp': 10000,
+                                             'participants': [self.priest['id'], self.warrior['id']]})
         boss = db.get_active_boss()
-        
+
         # 3. Test Holy Smite damage dealing
         # Restore priest MP
         db.update_player(self.priest['id'], {'mp': 100, 'hp': 1000})
         p = db.get_player("test_user_priest")
-        
+
         res = process_action(p, 'skill', 'holysmite')
         self.assertTrue(res['success'])
         self.assertTrue(res['damage'] > 0)
@@ -99,10 +104,10 @@ class TestRPGChanges(unittest.TestCase):
         print(f"Holy Smite damage dealt: {res['damage']}, MP reduced to {p_after['mp']}")
 
         # 4. Test Heal skill: doesn't damage boss, logs heal amount, but NO real-time gold
-        db.update_player(self.priest['id'], {'mp': 100, 'hp': 50}) # low HP
+        db.update_player(self.priest['id'], {'mp': 100, 'hp': 50})  # low HP
         p = db.get_player("test_user_priest")
         boss_before = db.get_active_boss()
-        
+
         # Clear combat logs and set initial gold to 0
         conn = db.get_connection()
         conn.execute("DELETE FROM combat_log")
@@ -116,15 +121,16 @@ class TestRPGChanges(unittest.TestCase):
         boss_after = db.get_active_boss()
         self.assertEqual(boss_after['current_hp'], boss_before['current_hp'])
         self.assertEqual(res_heal['damage'], 0)
-        
+
         # Flush combat log batch queue directly
         db.combat_logs.flush()
-        
+
         p_healed = db.get_player("test_user_priest")
         self.assertTrue(p_healed['hp'] > 50)
         # Gold must still be 0 (no real-time gold reward!)
         self.assertEqual(p_healed['gold'], 0)
-        print(f"Heal skill casted: HP restored to {p_healed['hp']}, Gold remained {p_healed['gold']} (No real-time Gold)")
+        print(
+            f"Heal skill casted: HP restored to {p_healed['hp']}, Gold remained {p_healed['gold']} (No real-time Gold)")
 
         # 5. Simulate boss death and check proportional Gold distribution
         # Set boss HP to 1 and active participants, and base_hp/max_hp to 1 to avoid scaling up current_hp
@@ -139,7 +145,7 @@ class TestRPGChanges(unittest.TestCase):
         # Let's check combat logs first to make sure there's healing logged
         # We need to add some damage for the warrior as well
         p_warrior = db.get_player("test_user_warrior")
-        
+
         # Warrior basic attacks the boss, dealing enough damage to defeat it
         res_kill = process_action(p_warrior, 'attack')
         self.assertTrue(res_kill['success'])
@@ -151,7 +157,7 @@ class TestRPGChanges(unittest.TestCase):
         # Confirm rankings are retrieved
         rankings = db.get_boss_rankings(boss['instance_id'])
         print(f"Defeat rankings: {rankings}")
-        
+
         # Check gold rewards in results
         gold_rewards = res_kill.get('gold_rewards', {})
         print(f"Distributed gold rewards: {gold_rewards}")
@@ -193,34 +199,36 @@ class TestRPGChanges(unittest.TestCase):
         boss = boss_manager.spawn_boss(1, boss_type='1')
         db.update_boss(boss['instance_id'], {'participants': [self.warrior['id']]})
         boss = db.get_active_boss()
-        
+
         # Trigger charging
         state = boss_manager.boss_state[boss['instance_id']]
         state['charge'] = 0
         state['is_charging'] = False
-        
+
         # Warrior ultimate should charge 100%
         p = db.get_player("test_user_warrior")
         db.update_player(p['id'], {'mp': 100})
         p = db.get_player("test_user_warrior")
         res = process_action(p, 'ultimate')
         self.assertTrue(res['success'])
-        
+
         # Check if boss is charging and charge_start_time is set
         self.assertTrue(state['is_charging'])
         self.assertIsNotNone(state['charge_start_time'])
-        print(f"Boss starts charging. is_charging: {state['is_charging']}, charge_start_time: {state['charge_start_time']}")
+        print(
+            f"Boss starts charging. is_charging: {state['is_charging']}, charge_start_time: {state['charge_start_time']}")
 
         # Simulate 20 seconds elapse
         state['charge_start_time'] = datetime.datetime.now() - datetime.timedelta(seconds=21)
-        
+
         # Run trigger_boss_aoe_attack manually
         asyncio.run(trigger_boss_aoe_attack(boss))
-        
+
         # Verify boss state reset
         self.assertFalse(state['is_charging'])
         self.assertEqual(state['charge'], 0)
         print("Boss AOE attack triggered successfully after 20s and state reset.")
+
 
 if __name__ == '__main__':
     unittest.main()

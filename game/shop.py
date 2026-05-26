@@ -7,9 +7,8 @@ in the game layer rather than the persistence layer.
 
 import json
 import os
-from database import db
-from .helpers import find_item_data, get_level_requirement
 
+from database import db
 
 # ---------------------------------------------------------------------------
 # Buy
@@ -189,4 +188,3 @@ def sell_items(owner_id, target_item_name=None, target_tier=None):
         return True, f"ขาย {enh_str}{item_name_display} สำเร็จ! ได้รับเงิน {total_gold} Gold 💰"
     else:
         return True, f"ขายเหมาไอเทมเกรด {target_tier.upper()} จำนวน {count} ชิ้น สำเร็จ! ได้รับเงินทั้งหมด {total_gold} Gold 💰"
-

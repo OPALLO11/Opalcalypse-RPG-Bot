@@ -1,7 +1,9 @@
-import requests
 import sys
 
+import requests
+
 OVERLAY_URL = "http://127.0.0.1:5000/internal/emit"
+
 
 def emit(event, data):
     try:
@@ -9,6 +11,7 @@ def emit(event, data):
         print(f"Sent {event} - Status: {resp.status_code}")
     except Exception as e:
         print(f"Error connecting to overlay: {e}")
+
 
 def main():
     count = 10
@@ -45,6 +48,7 @@ def main():
 
     print(f"Emitting party update with {count} players...")
     emit("party_update", party_data)
+
 
 if __name__ == "__main__":
     main()

@@ -1,16 +1,18 @@
 import json
 import os
-import random
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
+
 
 def load_json(filename):
     with open(os.path.join(DATA_DIR, filename), 'r', encoding='utf-8') as f:
         return json.load(f)
 
+
 CLASSES = load_json('classes.json')
 BOSSES = load_json('bosses.json')
 ITEMS = load_json('items.json')
+
 
 def calculate_boss_hp(base_hp, active_players):
     """
@@ -20,10 +22,11 @@ def calculate_boss_hp(base_hp, active_players):
         active_players = 1
     return int(base_hp * (1 + active_players * 0.3))
 
+
 def get_element_multiplier(attack_element, boss_weaknesses, boss_resists):
     if not attack_element:
         return 1.0
-    
+
     # Needs to parse strings if stored as JSON arrays in DB or loaded from list
     if isinstance(boss_weaknesses, str):
         try:
@@ -32,7 +35,8 @@ def get_element_multiplier(attack_element, boss_weaknesses, boss_resists):
             boss_weaknesses = []
 
     if isinstance(boss_resists, str):
-        try: boss_resists = json.loads(boss_resists)
+        try:
+            boss_resists = json.loads(boss_resists)
         except:
             boss_resists = []
 
@@ -41,6 +45,7 @@ def get_element_multiplier(attack_element, boss_weaknesses, boss_resists):
     if attack_element in boss_resists:
         return 0.5
     return 1.0
+
 
 def calculate_player_stats(player):
     """
@@ -51,15 +56,17 @@ def calculate_player_stats(player):
 
     cls_name = player.get('class', 'warrior').lower()
     cls = CLASSES.get(cls_name, CLASSES['warrior'])
-    
+
     class_levels = player.get('class_levels', {})
     if isinstance(class_levels, str):
-        try: class_levels = json.loads(class_levels)
-        except Exception: class_levels = {}
-    
+        try:
+            class_levels = json.loads(class_levels)
+        except Exception:
+            class_levels = {}
+
     level_dict = class_levels.get(cls_name, {'level': player.get('level', 1)})
     level = level_dict.get('level', player.get('level', 1))
-    
+
     stats = {
         'max_hp': cls['base_stats']['hp'] + (level - 1) * cls['stat_growth']['hp'],
         'max_mp': cls['base_stats']['mp'] + (level - 1) * cls['stat_growth']['mp'] + cls['passive'].get('bonus_mp', 0),
@@ -68,7 +75,7 @@ def calculate_player_stats(player):
         'crit_chance': cls['passive'].get('base_crit_chance', 0.0),
         'element': None
     }
-    
+
     # Add equipped items stats
     from database import db
     equipped_ids = []
@@ -102,11 +109,13 @@ def calculate_player_stats(player):
 
     return stats
 
+
 def get_required_exp(level):
     """
     Required EXP = (level * 200) + (level^2 * 50)
     """
     return (level * 200) + (level ** 2) * 50
+
 
 def add_exp(player_id, amount):
     """Delegate to the player repository which handles EXP + level-ups transactionally."""
