@@ -25,41 +25,81 @@ info_cog = InfoCog(None)
 
 
 class RPGBot(tio_commands.Bot):
-    def __init__(self, token, client_id, prefix, initial_channels):
+    def __init__(self, client_id, client_secret, bot_id, prefix, initial_channels):
         super().__init__(
-            token=token,
             client_id=client_id,
+            client_secret=client_secret,
+            bot_id=bot_id,
             prefix=prefix,
             initial_channels=initial_channels
         )
-        self.add_cog(CombatCog(self))
-        self.add_cog(InfoCog(self))
+    async def setup_hook(self):
+        await self.add_component(CombatCog(self))
+        await self.add_component(InfoCog(self))
+
+        # Start background game loops within the bot's event loop
+        import asyncio
+        asyncio.create_task(regen_loop())
+        asyncio.create_task(boss_attack_loop())
+
+    async def event_oauth_authorized(self, payload):
+        """Override to save tokens immediately after OAuth, not just on shutdown."""
+        await super().event_oauth_authorized(payload)
+        # Force-save token file right away so it persists even if the bot crashes
+        try:
+            await self.save_tokens()
+            print(f"[AUTH] ✓ OAuth token saved to .tio.tokens.json successfully!")
+        except Exception as e:
+            print(f"[AUTH] ✗ Failed to save token file: {e}")
 
     async def event_ready(self):
-        print(f"Logged in as | {self.nick}")
-        if hasattr(self, 'user_id'):
-            print(f"User id is | {self.user_id}")
-        print(f"Joined channels | {self.connected_channels}")
+        print(f"Logged in | Bot ID: {self.bot_id}")
+        if hasattr(self, 'user'):
+            print(f"User: {self.user}")
+
+        # Register bot instance for send_streamerbot_message fallback
+        from utils import set_bot
+        import asyncio
+        set_bot(self, asyncio.get_running_loop())
+
+        # TwitchIO 3.x requires explicitly subscribing to chat messages via EventSub
+        try:
+            import twitchio.eventsub as es
+            channel_name = os.environ.get('TWITCH_CHANNEL')
+            users = await self.fetch_users(logins=[channel_name])
+            if users:
+                broadcaster_id = users[0].id
+                sub = es.ChatMessageSubscription(broadcaster_user_id=broadcaster_id, user_id=self.bot_id)
+                await self.subscribe_websocket(payload=sub)
+                print(f"Subscribed to chat messages for channel: {channel_name}")
+        except Exception as e:
+            print(f"Failed to subscribe to chat messages: {e}")
 
     async def event_message(self, message):
-        if message.echo:
+        if message.chatter and hasattr(self, 'bot_id') and message.chatter.id == self.bot_id:
             return
 
-        author_name = message.author.name if message.author else "System"
-        print(f"[Twitch Chat] {author_name}: {message.content}")
+        author_name = message.chatter.name if message.chatter else "System"
+        print(f"[Twitch Chat] {author_name}: {message.text}")
 
         # Bits detection
         bits = 0
-        if message.tags and 'bits' in message.tags:
+        tags = getattr(message, 'tags', None)
+        if tags and 'bits' in tags:
             try:
-                bits = int(message.tags['bits'])
+                bits = int(tags['bits'])
             except:
                 pass
-        if bits >= 100 and message.author:
-            print(f"[Bits Art] {author_name} cheered {bits} bits with message: {message.content}")
-            asyncio.create_task(process_art_bits(author_name, bits, message.content))
+        if hasattr(message, 'cheer') and message.cheer:
+            try:
+                bits = getattr(message.cheer, 'bits', 0)
+            except:
+                pass
+        if bits >= 100 and message.chatter:
+            print(f"[Bits Art] {author_name} cheered {bits} bits with message: {message.text}")
+            asyncio.create_task(process_art_bits(author_name, bits, message.text))
 
-        await self.handle_commands(message)
+        await self.process_commands(message)
 
 
 class WSContext:
@@ -92,14 +132,14 @@ class WSContext:
         self.is_mod = is_mod or is_broadcaster
 
     @property
-    def author(self):
-        class Author:
+    def chatter(self):
+        class Chatter:
             def __init__(self, name, uid, is_mod):
                 self.name = name
                 self.id = uid
                 self.is_mod = is_mod
 
-        return Author(self.author_name, self.author_id, self.is_mod)
+        return Chatter(self.author_name, self.author_id, self.is_mod)
 
     async def send(self, message):
         messages = split_message(message, max_len=400)
@@ -436,43 +476,25 @@ def run_bot():
     if boss:
         emit_to_overlay('boss_update', boss)
 
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-
-    # Start both background loops
-    loop.create_task(regen_loop())
-    loop.create_task(boss_attack_loop())
-
     # Check mode from config
     config = load_config()
     sb_config = config.get('streamerbot', {})
     use_server = sb_config.get('use_python_ws_server', False)
 
     if use_server:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.create_task(regen_loop())
+        loop.create_task(boss_attack_loop())
         loop.run_until_complete(websocket_server_listener())
     else:
-        from api.twitch_auth import get_valid_token
-        token = get_valid_token()
-        if not token:
-            token = os.environ.get('TWITCH_TOKEN')
-        if not token:
-            token = config.get('twitch', {}).get('oauth_token')
-
-        if token and not token.startswith('oauth:'):
-            token = f"oauth:{token}"
-
         client_id = os.environ.get('TWITCH_CLIENT_ID') or config.get('twitch', {}).get('client_id')
+        client_secret = os.environ.get('TWITCH_CLIENT_SECRET') or config.get('twitch', {}).get('client_secret')
+        bot_id = os.environ.get('TWITCH_BOT_ID') or config.get('twitch', {}).get('bot_id')
         channel = os.environ.get('TWITCH_CHANNEL') or config.get('twitch', {}).get('channel') or 'opallo11'
         prefix = '!'
 
         print("Initializing native TwitchIO RPGBot...")
-        bot = RPGBot(token=token, client_id=client_id, prefix=prefix, initial_channels=[channel])
-
-        from utils import set_bot
-        set_bot(bot, loop)
-
-        loop.create_task(bot.connect())
-        try:
-            loop.run_forever()
-        except KeyboardInterrupt:
-            pass
+        bot = RPGBot(client_id=client_id, client_secret=client_secret, bot_id=bot_id, prefix=prefix, initial_channels=[channel])
+        
+        bot.run()

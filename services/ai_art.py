@@ -8,10 +8,9 @@ import requests
 
 from database import db
 
-CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config.json')
+from utils import load_config
 
-with open(CONFIG_PATH, 'r') as f:
-    config = json.load(f)
+config = load_config()
 
 BLACKLIST_KEYWORDS = [
     "nsfw", "nude", "naked", "sex", "porn",

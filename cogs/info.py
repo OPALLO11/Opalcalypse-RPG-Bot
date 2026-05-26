@@ -6,7 +6,7 @@ from game.helpers import find_item_data, get_level_requirement
 from utils import send_streamerbot_message
 
 
-class InfoCog(commands.Cog):
+class InfoCog(commands.Component):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -31,7 +31,7 @@ class InfoCog(commands.Cog):
         if len(args_list) < 2 or args_list[-1].lower() not in CLASSES:
             available_classes = ", ".join(CLASSES.keys())
             await ctx.send(
-                f"❌ @{ctx.author.name} ลงทะเบียนไม่สำเร็จ! "
+                f"❌ @{ctx.chatter.name} ลงทะเบียนไม่สำเร็จ! "
                 f"กรุณากรอกข้อมูลให้ครบถ้วน: !register <ชื่อ> <อาชีพ> "
                 f"(ตัวอย่าง: !register GM warrior หรือ !register Healer priest) "
                 f"อาชีพที่มี: {available_classes}"
@@ -41,36 +41,36 @@ class InfoCog(commands.Cog):
         class_name = args_list.pop().lower()
         character_name = " ".join(args_list)
 
-        success = db.create_player(ctx.author.name, ctx.author.id, character_name, class_name)
+        success = db.create_player(ctx.chatter.name, ctx.chatter.id, character_name, class_name)
         if success:
             await ctx.send(
-                f"@{ctx.author.name} Successfully registered as '{character_name}' (Class: {class_name.capitalize()})!")
+                f"@{ctx.chatter.name} Successfully registered as '{character_name}' (Class: {class_name.capitalize()})!")
         else:
-            await ctx.send(f"@{ctx.author.name} You are already registered.")
+            await ctx.send(f"@{ctx.chatter.name} You are already registered.")
 
     @commands.command(name='changeclass', aliases=['cc', 'ccl'])
     async def cmd_changeclass(self, ctx: commands.Context, new_class: str = ""):
         if not new_class:
-            await ctx.send(f"@{ctx.author.name} Usage: !changeclass <class>")
+            await ctx.send(f"@{ctx.chatter.name} Usage: !changeclass <class>")
             return
 
-        player = db.get_player(ctx.author.name)
+        player = db.get_player(ctx.chatter.name)
         if not player:
-            await ctx.send(f"@{ctx.author.name} You need to !register first.")
+            await ctx.send(f"@{ctx.chatter.name} You need to !register first.")
             return
 
         if player.get('session_class_changed'):
-            await ctx.send(f"@{ctx.author.name} You have already changed your class in this stream/session.")
+            await ctx.send(f"@{ctx.chatter.name} You have already changed your class in this stream/session.")
             return
 
         from game.logic import CLASSES
         new_class = new_class.lower()
         if new_class not in CLASSES:
-            await ctx.send(f"@{ctx.author.name} Invalid class. Available classes: {', '.join(CLASSES.keys())}")
+            await ctx.send(f"@{ctx.chatter.name} Invalid class. Available classes: {', '.join(CLASSES.keys())}")
             return
 
         if player.get('class') == new_class:
-            await ctx.send(f"@{ctx.author.name} You are already a {new_class.capitalize()}.")
+            await ctx.send(f"@{ctx.chatter.name} You are already a {new_class.capitalize()}.")
             return
 
         # Recalculate stats for the new class
@@ -91,23 +91,23 @@ class InfoCog(commands.Cog):
         })
 
         if success:
-            await ctx.send(f"@{ctx.author.name} Successfully changed class to {new_class.capitalize()}!")
+            await ctx.send(f"@{ctx.chatter.name} Successfully changed class to {new_class.capitalize()}!")
         else:
-            await ctx.send(f"@{ctx.author.name} Failed to change class.")
+            await ctx.send(f"@{ctx.chatter.name} Failed to change class.")
 
     @commands.command(name='rename')
     async def cmd_rename(self, ctx: commands.Context, *, new_name: str = ""):
         if not new_name:
-            await ctx.send(f"@{ctx.author.name} Please provide a new name: !rename <name>")
+            await ctx.send(f"@{ctx.chatter.name} Please provide a new name: !rename <name>")
             return
 
-        player = db.get_player(ctx.author.name)
+        player = db.get_player(ctx.chatter.name)
         if not player:
-            await ctx.send(f"@{ctx.author.name} You need to !register first.")
+            await ctx.send(f"@{ctx.chatter.name} You need to !register first.")
             return
 
         if player.get('session_renamed'):
-            await ctx.send(f"@{ctx.author.name} You have already renamed your character in this stream/session.")
+            await ctx.send(f"@{ctx.chatter.name} You have already renamed your character in this stream/session.")
             return
 
         success = db.update_player(player['id'], {
@@ -116,22 +116,22 @@ class InfoCog(commands.Cog):
         })
 
         if success:
-            await ctx.send(f"@{ctx.author.name} Successfully renamed to '{new_name}'!")
+            await ctx.send(f"@{ctx.chatter.name} Successfully renamed to '{new_name}'!")
         else:
-            await ctx.send(f"@{ctx.author.name} Failed to rename your character.")
+            await ctx.send(f"@{ctx.chatter.name} Failed to rename your character.")
 
     @commands.command(name='inventory', aliases=['inv'])
     async def cmd_inventory(self, ctx: commands.Context):
-        player = db.get_player(ctx.author.name)
+        player = db.get_player(ctx.chatter.name)
         if not player:
-            await ctx.send(f"@{ctx.author.name} Please !register first.")
+            await ctx.send(f"@{ctx.chatter.name} Please !register first.")
             return
 
         # Get items via repository
         items = db.items.get_items_by_owner(player['id'])
 
         if not items:
-            await ctx.send(f"@{ctx.author.name} Your inventory is empty.")
+            await ctx.send(f"@{ctx.chatter.name} Your inventory is empty.")
             return
 
         item_list_str = []
@@ -155,24 +155,24 @@ class InfoCog(commands.Cog):
 
             item_list_str.append(f"{full_name}{equipped}")
 
-        msg = f"@{ctx.author.name} Inventory: " + ", ".join(item_list_str)
+        msg = f"@{ctx.chatter.name} Inventory: " + ", ".join(item_list_str)
         if not send_streamerbot_message(msg):
             await ctx.send(msg)
 
     @commands.command(name='equip', aliases=['eq'])
     async def cmd_equip(self, ctx: commands.Context, *, item_name: str = ""):
         if not item_name:
-            await ctx.send(f"@{ctx.author.name} Usage: !equip <item name>")
+            await ctx.send(f"@{ctx.chatter.name} Usage: !equip <item name>")
             return
 
-        player = db.get_player(ctx.author.name)
+        player = db.get_player(ctx.chatter.name)
         if not player: return
 
         # Get items via repository
         db_items = db.items.get_items_by_owner(player['id'])
 
         if not db_items:
-            await ctx.send(f"@{ctx.author.name} Your inventory is empty.")
+            await ctx.send(f"@{ctx.chatter.name} Your inventory is empty.")
             return
 
         from game.logic import ITEMS
@@ -196,7 +196,7 @@ class InfoCog(commands.Cog):
                 break
 
         if not target_db_id:
-            await ctx.send(f"@{ctx.author.name} You do not own an item named '{item_name}'.")
+            await ctx.send(f"@{ctx.chatter.name} You do not own an item named '{item_name}'.")
             return
 
         slot = None
@@ -223,44 +223,44 @@ class InfoCog(commands.Cog):
             current_lvl = player.get('level', 1)
             if current_lvl < req_lvl:
                 await ctx.send(
-                    f"@{ctx.author.name} ❌ เลเวลไม่ถึง! ไอเทมนี้ต้องการเลเวล {req_lvl} (เลเวลปัจจุบันของคุณคือ {current_lvl})")
+                    f"@{ctx.chatter.name} ❌ เลเวลไม่ถึง! ไอเทมนี้ต้องการเลเวล {req_lvl} (เลเวลปัจจุบันของคุณคือ {current_lvl})")
                 return
 
             db.update_player(player['id'], {slot: target_db_id})
-            await ctx.send(f"@{ctx.author.name} Equipped {target_item_name}!")
+            await ctx.send(f"@{ctx.chatter.name} Equipped {target_item_name}!")
         else:
-            await ctx.send(f"@{ctx.author.name} Invalid item type.")
+            await ctx.send(f"@{ctx.chatter.name} Invalid item type.")
 
     @commands.command(name='unequip', aliases=['uneq', 'uq'])
     async def cmd_unequip(self, ctx: commands.Context, slot_name: str = ""):
-        player = db.get_player(ctx.author.name)
+        player = db.get_player(ctx.chatter.name)
         if not player: return
 
         slot_map = {'weapon': 'equipped_weapon', 'armor': 'equipped_armor', 'accessory': 'equipped_accessory'}
         slot_db = slot_map.get(slot_name.lower())
 
         if not slot_db:
-            await ctx.send(f"@{ctx.author.name} Usage: !unequip weapon/armor/accessory")
+            await ctx.send(f"@{ctx.chatter.name} Usage: !unequip weapon/armor/accessory")
             return
 
         if player.get(slot_db) is None:
-            await ctx.send(f"@{ctx.author.name} You don't have a {slot_name.lower()} equipped.")
+            await ctx.send(f"@{ctx.chatter.name} You don't have a {slot_name.lower()} equipped.")
             return
 
         db.update_player(player['id'], {slot_db: None})
-        await ctx.send(f"@{ctx.author.name} Unequipped {slot_name.lower()}!")
+        await ctx.send(f"@{ctx.chatter.name} Unequipped {slot_name.lower()}!")
 
     @commands.command(name='sell')
     async def cmd_sell(self, ctx: commands.Context, *, target: str = ""):
-        player = db.get_player(ctx.author.name)
+        player = db.get_player(ctx.chatter.name)
         if not player:
-            await ctx.send(f"@{ctx.author.name} Please !register first.")
+            await ctx.send(f"@{ctx.chatter.name} Please !register first.")
             return
 
         target = target.strip()
         if not target:
             await ctx.send(
-                f"@{ctx.author.name} วิธีใช้: !sell <ชื่อไอเทม/ID> เพื่อขายทีละชิ้น หรือ !sell R / !sell SR เพื่อขายเหมา")
+                f"@{ctx.chatter.name} วิธีใช้: !sell <ชื่อไอเทม/ID> เพื่อขายทีละชิ้น หรือ !sell R / !sell SR เพื่อขายเหมา")
             return
 
         target_tier = None
@@ -273,13 +273,13 @@ class InfoCog(commands.Cog):
 
         from game.shop import sell_items
         success, msg = sell_items(player['id'], target_item_name=target_item_name, target_tier=target_tier)
-        await ctx.send(f"@{ctx.author.name} {msg}")
+        await ctx.send(f"@{ctx.chatter.name} {msg}")
 
     @commands.command(name='stats', aliases=['stat'])
     async def cmd_stats(self, ctx: commands.Context):
-        player = db.get_player(ctx.author.name)
+        player = db.get_player(ctx.chatter.name)
         if not player:
-            await ctx.send(f"@{ctx.author.name} Please !register first.")
+            await ctx.send(f"@{ctx.chatter.name} Please !register first.")
             return
 
         from game.logic import calculate_player_stats, get_required_exp
@@ -339,11 +339,11 @@ class InfoCog(commands.Cog):
 
     @commands.command(name='inspect', aliases=['equipment', 'equipments', 'ins'])
     async def cmd_inspect(self, ctx: commands.Context, target_name: str = ""):
-        search_name = target_name.strip().replace('@', '') if target_name else ctx.author.name
+        search_name = target_name.strip().replace('@', '') if target_name else ctx.chatter.name
 
         player = db.get_player(search_name)
         if not player:
-            await ctx.send(f"@{ctx.author.name} Player '{search_name}' is not registered.")
+            await ctx.send(f"@{ctx.chatter.name} Player '{search_name}' is not registered.")
             return
 
         eq = db.get_player_equipment(player['id'])
@@ -377,16 +377,16 @@ class InfoCog(commands.Cog):
 
     @commands.command(name='gold', aliases=['money'])
     async def cmd_gold(self, ctx: commands.Context):
-        player = db.get_player(ctx.author.name)
+        player = db.get_player(ctx.chatter.name)
         if not player:
-            await ctx.send(f"@{ctx.author.name} Please !register first.")
+            await ctx.send(f"@{ctx.chatter.name} Please !register first.")
             return
 
         t1 = player.get('scroll_t1', 0)
         t2 = player.get('scroll_t2', 0)
         t3 = player.get('scroll_t3', 0)
 
-        msg = f"@{ctx.author.name} คุณมี {player.get('gold', 0)} Gold"
+        msg = f"@{ctx.chatter.name} คุณมี {player.get('gold', 0)} Gold"
         if t1 > 0 or t2 > 0 or t3 > 0:
             msg += f" | ใบกันแตก: [Basic={t1}] [Blessed={t2}] [Divine={t3}]"
 
@@ -394,7 +394,7 @@ class InfoCog(commands.Cog):
 
     @commands.command(name='shop')
     async def cmd_shop(self, ctx: commands.Context):
-        player = db.get_player(ctx.author.name)
+        player = db.get_player(ctx.chatter.name)
         lvl = player.get('level', 1) if player else 1
 
         msg = f"🛒 ร้านค้าสตรีม (Shop) | พิมพ์ !buy <ไอเทม> เพื่อซื้อ:\n" \
@@ -412,18 +412,18 @@ class InfoCog(commands.Cog):
     @commands.command(name='buy')
     async def cmd_buy(self, ctx: commands.Context, item_name: str = ""):
         if not item_name:
-            await ctx.send(f"@{ctx.author.name} Usage: !buy potion/scroll")
+            await ctx.send(f"@{ctx.chatter.name} Usage: !buy potion/scroll")
             return
 
-        player = db.get_player(ctx.author.name)
+        player = db.get_player(ctx.chatter.name)
         if not player:
-            await ctx.send(f"@{ctx.author.name} Please !register first.")
+            await ctx.send(f"@{ctx.chatter.name} Please !register first.")
             return
 
         from game.shop import buy_shop_item
-        success, msg = buy_shop_item(ctx.author.name, item_name)
+        success, msg = buy_shop_item(ctx.chatter.name, item_name)
         if success:
-            await ctx.send(f"@{ctx.author.name} {msg}")
+            await ctx.send(f"@{ctx.chatter.name} {msg}")
             if item_name.lower().strip() == 'potion':
                 from utils import emit_to_overlay
                 from game.combat import get_party_data
@@ -431,7 +431,7 @@ class InfoCog(commands.Cog):
                 if boss and player['id'] in boss.get('participants', []):
                     emit_to_overlay('party_update', get_party_data(boss))
         else:
-            await ctx.send(f"@{ctx.author.name} ❌ {msg}")
+            await ctx.send(f"@{ctx.chatter.name} ❌ {msg}")
 
     @commands.command(name='classes', aliases=['class', 'cls'])
     async def cmd_classes(self, ctx: commands.Context):
@@ -446,8 +446,8 @@ class InfoCog(commands.Cog):
     @commands.command(name='reload')
     async def cmd_reload(self, ctx: commands.Context):
         import os
-        author_name = ctx.author.name
-        is_mod = getattr(ctx.author, 'is_mod', False)
+        author_name = ctx.chatter.name
+        is_mod = getattr(ctx.chatter, 'is_mod', False)
         channel_owner = os.environ.get('TWITCH_CHANNEL', '').lower()
         if not is_mod and author_name.lower() != channel_owner:
             await ctx.send(f"@{author_name} ❌ You are not allowed to use this command!")
@@ -483,17 +483,17 @@ class InfoCog(commands.Cog):
 
             # 1. Native TwitchIO Bot mode reload handling
             if self.bot:
-                self.bot.remove_cog("CombatCog")
-                self.bot.remove_cog("InfoCog")
+                await self.bot.remove_component("CombatCog")
+                await self.bot.remove_component("InfoCog")
 
-                self.bot.add_cog(cogs.combat.CombatCog(self.bot))
-                self.bot.add_cog(cogs.info.InfoCog(self.bot))
+                await self.bot.add_component(cogs.combat.CombatCog(self.bot))
+                await self.bot.add_component(cogs.info.InfoCog(self.bot))
 
                 # Update globals in bot module
                 bot_mod = sys.modules.get('bot')
                 if bot_mod:
-                    bot_mod.combat_cog = self.bot.get_cog("CombatCog")
-                    bot_mod.info_cog = self.bot.get_cog("InfoCog")
+                    bot_mod.combat_cog = self.bot.get_component("CombatCog")
+                    bot_mod.info_cog = self.bot.get_component("InfoCog")
             else:
                 # 2. Local WS Server mode reload handling
                 bot_mod = sys.modules.get('bot')
@@ -509,5 +509,5 @@ class InfoCog(commands.Cog):
             traceback.print_exc()
 
 
-def prepare(bot: commands.Bot):
-    bot.add_cog(InfoCog(bot))
+async def prepare(bot: commands.Bot):
+    await bot.add_component(InfoCog(bot))

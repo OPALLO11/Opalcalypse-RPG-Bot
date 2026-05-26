@@ -22,11 +22,9 @@ class BossManager:
 
     def spawn_boss(self, active_players_count, boss_type='normal'):
         if boss_type == 'normal':
-            import json, os
-            config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config.json')
+            from utils import load_config
             try:
-                with open(config_path, 'r', encoding='utf-8') as f:
-                    config = json.load(f)
+                config = load_config()
                 game_config = config.get('game', {})
                 enable_monthly = game_config.get('enable_monthly_boss', False)
                 monthly_chance = game_config.get('monthly_boss_chance', 0.05)

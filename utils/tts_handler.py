@@ -2,10 +2,9 @@ import json
 import os
 import threading
 
-CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config.json')
+from utils import load_config
 
-with open(CONFIG_PATH, 'r') as f:
-    config = json.load(f)
+config = load_config()
 
 
 class TTSManager:

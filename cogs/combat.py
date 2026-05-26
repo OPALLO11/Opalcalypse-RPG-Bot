@@ -9,12 +9,12 @@ from game.combat import process_action, get_party_data
 from utils import emit_to_overlay
 
 
-class CombatCog(commands.Cog):
+class CombatCog(commands.Component):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     def _process_rpg_action(self, ctx: commands.Context, action: str, skill_name: str = None, target: str = None):
-        username = ctx.author.name
+        username = ctx.chatter.name
         player = db.get_player(username)
         if not player:
             asyncio.create_task(ctx.send(f"@{username} Please !register <character_name> before attacking."))
@@ -175,8 +175,8 @@ class CombatCog(commands.Cog):
 
     @commands.command(name='spawn', aliases=['sp', 'spwn'])
     async def cmd_spawn(self, ctx: commands.Context, type_arg: str = 'normal'):
-        if not ctx.author.is_mod and ctx.author.name.lower() != os.environ.get('TWITCH_CHANNEL', '').lower():
-            await ctx.send(f"@{ctx.author.name} ❌ You are not allowed to use this command!")
+        if not ctx.chatter.is_mod and ctx.chatter.name.lower() != os.environ.get('TWITCH_CHANNEL', '').lower():
+            await ctx.send(f"@{ctx.chatter.name} ❌ You are not allowed to use this command!")
             return
 
         boss = boss_manager.spawn_boss(1, boss_type=type_arg.lower())
@@ -189,8 +189,8 @@ class CombatCog(commands.Cog):
 
     @commands.command(name='resetchallenge')
     async def cmd_resetchallenge(self, ctx: commands.Context):
-        if not ctx.author.is_mod and ctx.author.name.lower() != os.environ.get('TWITCH_CHANNEL', '').lower():
-            await ctx.send(f"@{ctx.author.name} ❌ You are not allowed to use this command!")
+        if not ctx.chatter.is_mod and ctx.chatter.name.lower() != os.environ.get('TWITCH_CHANNEL', '').lower():
+            await ctx.send(f"@{ctx.chatter.name} ❌ You are not allowed to use this command!")
             return
 
         from game.challenge_manager import spawn_challenge
@@ -201,5 +201,5 @@ class CombatCog(commands.Cog):
             await ctx.send("Failed to spawn new challenge.")
 
 
-def prepare(bot: commands.Bot):
-    bot.add_cog(CombatCog(bot))
+async def prepare(bot: commands.Bot):
+    await bot.add_component(CombatCog(bot))
