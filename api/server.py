@@ -94,9 +94,6 @@ def streamerbot_webhook():
     return {"status": "ignored", "message": "Request ignored (invalid action or reward)"}, 200
 
 
-from api.twitch_auth import init_auth_routes
-
-init_auth_routes(app)
 
 
 def run_flask_api():
