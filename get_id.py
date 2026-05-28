@@ -12,7 +12,7 @@ CLIENT_SECRET: str = os.getenv("TWITCH_CLIENT_SECRET") # The CLIENT SECRET from 
 async def main() -> None:
     async with twitchio.Client(client_id=CLIENT_ID, client_secret=CLIENT_SECRET) as client:
         await client.login()
-        user = await client.fetch_users(logins=["Screammyzz", "silkyscreammyzzbot"]) # example (streamer.username, bot.username)
+        user = await client.fetch_users(logins=["Screammyzz", "silkyscreammyzzbot", "me_0_w__0"]) # example (streamer.username, bot.username)
         # !!! make sure it's a username ***NOT*** display name !!!
 
         for u in user:
