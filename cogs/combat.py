@@ -175,7 +175,8 @@ class CombatCog(commands.Component):
 
     @commands.command(name='spawn', aliases=['sp', 'spwn'])
     async def cmd_spawn(self, ctx: commands.Context, type_arg: str = 'normal'):
-        if not ctx.chatter.is_mod and ctx.chatter.name.lower() != os.environ.get('TWITCH_CHANNEL', '').lower():
+        is_mod = getattr(ctx.chatter, 'moderator', False) or getattr(ctx.chatter, 'is_mod', False)
+        if not is_mod and ctx.chatter.name.lower() != os.environ.get('TWITCH_CHANNEL', '').lower():
             await ctx.send(f"@{ctx.chatter.name} ❌ You are not allowed to use this command!")
             return
 
@@ -189,7 +190,8 @@ class CombatCog(commands.Component):
 
     @commands.command(name='resetchallenge')
     async def cmd_resetchallenge(self, ctx: commands.Context):
-        if not ctx.chatter.is_mod and ctx.chatter.name.lower() != os.environ.get('TWITCH_CHANNEL', '').lower():
+        is_mod = getattr(ctx.chatter, 'moderator', False) or getattr(ctx.chatter, 'is_mod', False)
+        if not is_mod and ctx.chatter.name.lower() != os.environ.get('TWITCH_CHANNEL', '').lower():
             await ctx.send(f"@{ctx.chatter.name} ❌ You are not allowed to use this command!")
             return
 

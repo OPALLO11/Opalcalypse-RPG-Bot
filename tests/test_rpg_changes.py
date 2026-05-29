@@ -43,14 +43,14 @@ class TestRPGChanges(unittest.TestCase):
     def test_registration_validation(self):
         print("\n--- Testing Registration Validation ---")
         from cogs.info import InfoCog
-        class MockAuthor:
+        class MockChatter:
             def __init__(self, name):
                 self.name = name
                 self.id = "9999"
 
         class MockContext:
             def __init__(self):
-                self.author = MockAuthor("test_user_new")
+                self.chatter = MockChatter("test_user_new")
                 self.sent_messages = []
 
             async def send(self, msg):

@@ -138,6 +138,7 @@ class WSContext:
                 self.name = name
                 self.id = uid
                 self.is_mod = is_mod
+                self.moderator = is_mod
 
         return Chatter(self.author_name, self.author_id, self.is_mod)
 

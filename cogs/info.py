@@ -447,7 +447,7 @@ class InfoCog(commands.Component):
     async def cmd_reload(self, ctx: commands.Context):
         import os
         author_name = ctx.chatter.name
-        is_mod = getattr(ctx.chatter, 'is_mod', False)
+        is_mod = getattr(ctx.chatter, 'moderator', False) or getattr(ctx.chatter, 'is_mod', False)
         channel_owner = os.environ.get('TWITCH_CHANNEL', '').lower()
         if not is_mod and author_name.lower() != channel_owner:
             await ctx.send(f"@{author_name} ❌ You are not allowed to use this command!")

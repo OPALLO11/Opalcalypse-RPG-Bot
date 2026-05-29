@@ -13,14 +13,15 @@ class TestReload(unittest.TestCase):
     def test_reload_unauthorized(self):
         print("\n--- Testing Reload Command (Unauthorized) ---")
 
-        class MockAuthor:
+        class MockChatter:
             def __init__(self, name, is_mod=False):
                 self.name = name
                 self.is_mod = is_mod
+                self.moderator = is_mod
 
         class MockContext:
             def __init__(self):
-                self.author = MockAuthor("regular_user", is_mod=False)
+                self.chatter = MockChatter("regular_user", is_mod=False)
                 self.sent_messages = []
 
             async def send(self, msg):
@@ -44,26 +45,27 @@ class TestReload(unittest.TestCase):
                 self.added_cogs = []
                 self.cogs = {}
 
-            def remove_cog(self, name):
+            async def remove_component(self, name):
                 self.removed_cogs.append(name)
                 if name in self.cogs:
                     del self.cogs[name]
 
-            def add_cog(self, cog):
+            async def add_component(self, cog):
                 self.added_cogs.append(cog.__class__.__name__)
                 self.cogs[cog.__class__.__name__] = cog
 
-            def get_cog(self, name):
+            def get_component(self, name):
                 return self.cogs.get(name)
 
-        class MockAuthor:
+        class MockChatter:
             def __init__(self, name, is_mod=True):
                 self.name = name
                 self.is_mod = is_mod
+                self.moderator = is_mod
 
         class MockContext:
             def __init__(self, bot):
-                self.author = MockAuthor("broadcaster_user", is_mod=True)
+                self.chatter = MockChatter("broadcaster_user", is_mod=True)
                 self.sent_messages = []
                 self.bot = bot
 
@@ -101,14 +103,15 @@ class TestReload(unittest.TestCase):
     def test_reload_authorized_ws_mode(self):
         print("\n--- Testing Reload Command (Authorized WS Mode) ---")
 
-        class MockAuthor:
+        class MockChatter:
             def __init__(self, name, is_mod=True):
                 self.name = name
                 self.is_mod = is_mod
+                self.moderator = is_mod
 
         class MockContext:
             def __init__(self):
-                self.author = MockAuthor("moderator_user", is_mod=True)
+                self.chatter = MockChatter("moderator_user", is_mod=True)
                 self.sent_messages = []
                 self.bot = None  # WS mode has no bot reference on the cog
 
