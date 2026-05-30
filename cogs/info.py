@@ -3,7 +3,7 @@ from twitchio.ext import commands
 from database import db
 from game.boss_manager import boss_manager
 from game.helpers import find_item_data, get_level_requirement
-from utils import send_streamerbot_message
+from utils import send_streamerbot_message, send_twitch_chat
 
 
 class InfoCog(commands.Component):
@@ -12,16 +12,16 @@ class InfoCog(commands.Component):
 
     @commands.command(name='test')
     async def cmd_test(self, ctx: commands.Context):
-        await ctx.send("prefix command is working")
+        await send_twitch_chat(ctx, "prefix command is working")
 
     @commands.command(name='boss')
     async def cmd_boss(self, ctx: commands.Context):
         boss = boss_manager.get_current_boss()
         if boss:
             weaknesses = ', '.join(boss.get('weakness', []))
-            await ctx.send(f"Boss: {boss['name']} ({boss['current_hp']}/{boss['max_hp']}) Weak to: {weaknesses}")
+            await send_twitch_chat(ctx, f"Boss: {boss['name']} ({boss['current_hp']}/{boss['max_hp']}) Weak to: {weaknesses}")
         else:
-            await ctx.send("No boss is currently active.")
+            await send_twitch_chat(ctx, "No boss is currently active.")
 
     @commands.command(name='register', aliases=['reg', 'regis'])
     async def cmd_register(self, ctx: commands.Context, *args):
@@ -30,7 +30,7 @@ class InfoCog(commands.Component):
 
         if len(args_list) < 2 or args_list[-1].lower() not in CLASSES:
             available_classes = ", ".join(CLASSES.keys())
-            await ctx.send(
+            await send_twitch_chat(ctx,
                 f"❌ @{ctx.chatter.name} ลงทะเบียนไม่สำเร็จ! "
                 f"กรุณากรอกข้อมูลให้ครบถ้วน: !register <ชื่อ> <อาชีพ> "
                 f"(ตัวอย่าง: !register GM warrior หรือ !register Healer priest) "
@@ -43,34 +43,34 @@ class InfoCog(commands.Component):
 
         success = db.create_player(ctx.chatter.name, ctx.chatter.id, character_name, class_name)
         if success:
-            await ctx.send(
+            await send_twitch_chat(ctx,
                 f"@{ctx.chatter.name} Successfully registered as '{character_name}' (Class: {class_name.capitalize()})!")
         else:
-            await ctx.send(f"@{ctx.chatter.name} You are already registered.")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} You are already registered.")
 
     @commands.command(name='changeclass', aliases=['cc', 'ccl'])
     async def cmd_changeclass(self, ctx: commands.Context, new_class: str = ""):
         if not new_class:
-            await ctx.send(f"@{ctx.chatter.name} Usage: !changeclass <class>")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} Usage: !changeclass <class>")
             return
 
         player = db.get_player(ctx.chatter.name)
         if not player:
-            await ctx.send(f"@{ctx.chatter.name} You need to !register first.")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} You need to !register first.")
             return
 
         if player.get('session_class_changed'):
-            await ctx.send(f"@{ctx.chatter.name} You have already changed your class in this stream/session.")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} You have already changed your class in this stream/session.")
             return
 
         from game.logic import CLASSES
         new_class = new_class.lower()
         if new_class not in CLASSES:
-            await ctx.send(f"@{ctx.chatter.name} Invalid class. Available classes: {', '.join(CLASSES.keys())}")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} Invalid class. Available classes: {', '.join(CLASSES.keys())}")
             return
 
         if player.get('class') == new_class:
-            await ctx.send(f"@{ctx.chatter.name} You are already a {new_class.capitalize()}.")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} You are already a {new_class.capitalize()}.")
             return
 
         # Recalculate stats for the new class
@@ -91,23 +91,23 @@ class InfoCog(commands.Component):
         })
 
         if success:
-            await ctx.send(f"@{ctx.chatter.name} Successfully changed class to {new_class.capitalize()}!")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} Successfully changed class to {new_class.capitalize()}!")
         else:
-            await ctx.send(f"@{ctx.chatter.name} Failed to change class.")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} Failed to change class.")
 
     @commands.command(name='rename')
     async def cmd_rename(self, ctx: commands.Context, *, new_name: str = ""):
         if not new_name:
-            await ctx.send(f"@{ctx.chatter.name} Please provide a new name: !rename <name>")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} Please provide a new name: !rename <name>")
             return
 
         player = db.get_player(ctx.chatter.name)
         if not player:
-            await ctx.send(f"@{ctx.chatter.name} You need to !register first.")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} You need to !register first.")
             return
 
         if player.get('session_renamed'):
-            await ctx.send(f"@{ctx.chatter.name} You have already renamed your character in this stream/session.")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} You have already renamed your character in this stream/session.")
             return
 
         success = db.update_player(player['id'], {
@@ -116,22 +116,22 @@ class InfoCog(commands.Component):
         })
 
         if success:
-            await ctx.send(f"@{ctx.chatter.name} Successfully renamed to '{new_name}'!")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} Successfully renamed to '{new_name}'!")
         else:
-            await ctx.send(f"@{ctx.chatter.name} Failed to rename your character.")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} Failed to rename your character.")
 
     @commands.command(name='inventory', aliases=['inv'])
     async def cmd_inventory(self, ctx: commands.Context):
         player = db.get_player(ctx.chatter.name)
         if not player:
-            await ctx.send(f"@{ctx.chatter.name} Please !register first.")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} Please !register first.")
             return
 
         # Get items via repository
         items = db.items.get_items_by_owner(player['id'])
 
         if not items:
-            await ctx.send(f"@{ctx.chatter.name} Your inventory is empty.")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} Your inventory is empty.")
             return
 
         item_list_str = []
@@ -157,12 +157,12 @@ class InfoCog(commands.Component):
 
         msg = f"@{ctx.chatter.name} Inventory: " + ", ".join(item_list_str)
         if not send_streamerbot_message(msg):
-            await ctx.send(msg)
+            await send_twitch_chat(ctx, msg)
 
     @commands.command(name='equip', aliases=['eq'])
     async def cmd_equip(self, ctx: commands.Context, *, item_name: str = ""):
         if not item_name:
-            await ctx.send(f"@{ctx.chatter.name} Usage: !equip <item name>")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} Usage: !equip <item name>")
             return
 
         player = db.get_player(ctx.chatter.name)
@@ -172,7 +172,7 @@ class InfoCog(commands.Component):
         db_items = db.items.get_items_by_owner(player['id'])
 
         if not db_items:
-            await ctx.send(f"@{ctx.chatter.name} Your inventory is empty.")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} Your inventory is empty.")
             return
 
         from game.logic import ITEMS
@@ -196,7 +196,7 @@ class InfoCog(commands.Component):
                 break
 
         if not target_db_id:
-            await ctx.send(f"@{ctx.chatter.name} You do not own an item named '{item_name}'.")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} You do not own an item named '{item_name}'.")
             return
 
         slot = None
@@ -222,14 +222,14 @@ class InfoCog(commands.Component):
 
             current_lvl = player.get('level', 1)
             if current_lvl < req_lvl:
-                await ctx.send(
+                await send_twitch_chat(ctx,
                     f"@{ctx.chatter.name} ❌ เลเวลไม่ถึง! ไอเทมนี้ต้องการเลเวล {req_lvl} (เลเวลปัจจุบันของคุณคือ {current_lvl})")
                 return
 
             db.update_player(player['id'], {slot: target_db_id})
-            await ctx.send(f"@{ctx.chatter.name} Equipped {target_item_name}!")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} Equipped {target_item_name}!")
         else:
-            await ctx.send(f"@{ctx.chatter.name} Invalid item type.")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} Invalid item type.")
 
     @commands.command(name='unequip', aliases=['uneq', 'uq'])
     async def cmd_unequip(self, ctx: commands.Context, slot_name: str = ""):
@@ -240,26 +240,26 @@ class InfoCog(commands.Component):
         slot_db = slot_map.get(slot_name.lower())
 
         if not slot_db:
-            await ctx.send(f"@{ctx.chatter.name} Usage: !unequip weapon/armor/accessory")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} Usage: !unequip weapon/armor/accessory")
             return
 
         if player.get(slot_db) is None:
-            await ctx.send(f"@{ctx.chatter.name} You don't have a {slot_name.lower()} equipped.")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} You don't have a {slot_name.lower()} equipped.")
             return
 
         db.update_player(player['id'], {slot_db: None})
-        await ctx.send(f"@{ctx.chatter.name} Unequipped {slot_name.lower()}!")
+        await send_twitch_chat(ctx, f"@{ctx.chatter.name} Unequipped {slot_name.lower()}!")
 
     @commands.command(name='sell')
     async def cmd_sell(self, ctx: commands.Context, *, target: str = ""):
         player = db.get_player(ctx.chatter.name)
         if not player:
-            await ctx.send(f"@{ctx.chatter.name} Please !register first.")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} Please !register first.")
             return
 
         target = target.strip()
         if not target:
-            await ctx.send(
+            await send_twitch_chat(ctx,
                 f"@{ctx.chatter.name} วิธีใช้: !sell <ชื่อไอเทม/ID> เพื่อขายทีละชิ้น หรือ !sell R / !sell SR เพื่อขายเหมา")
             return
 
@@ -273,13 +273,13 @@ class InfoCog(commands.Component):
 
         from game.shop import sell_items
         success, msg = sell_items(player['id'], target_item_name=target_item_name, target_tier=target_tier)
-        await ctx.send(f"@{ctx.chatter.name} {msg}")
+        await send_twitch_chat(ctx, f"@{ctx.chatter.name} {msg}")
 
     @commands.command(name='stats', aliases=['stat'])
     async def cmd_stats(self, ctx: commands.Context):
         player = db.get_player(ctx.chatter.name)
         if not player:
-            await ctx.send(f"@{ctx.chatter.name} Please !register first.")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} Please !register first.")
             return
 
         from game.logic import calculate_player_stats, get_required_exp
@@ -324,7 +324,7 @@ class InfoCog(commands.Component):
         if has_inactive_item:
             msg += " ⚠️ (มีไอเทมที่ไม่มีผลเนื่องจากเลเวลไม่ถึง)"
         if not send_streamerbot_message(msg):
-            await ctx.send(msg)
+            await send_twitch_chat(ctx, msg)
 
     @commands.command(name='info')
     async def cmd_info(self, ctx: commands.Context):
@@ -335,7 +335,7 @@ class InfoCog(commands.Component):
 
         for msg in [msg1, msg2, msg3, msg4]:
             if not send_streamerbot_message(msg):
-                await ctx.send(msg)
+                await send_twitch_chat(ctx, msg)
 
     @commands.command(name='inspect', aliases=['equipment', 'equipments', 'ins'])
     async def cmd_inspect(self, ctx: commands.Context, target_name: str = ""):
@@ -343,7 +343,7 @@ class InfoCog(commands.Component):
 
         player = db.get_player(search_name)
         if not player:
-            await ctx.send(f"@{ctx.chatter.name} Player '{search_name}' is not registered.")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} Player '{search_name}' is not registered.")
             return
 
         eq = db.get_player_equipment(player['id'])
@@ -373,13 +373,13 @@ class InfoCog(commands.Component):
 
         msg = f"🔍 Inspecting {payload['character_name']} ({cls.capitalize()} Lv.{payload['level']}) | Weapon: {format_item(payload['equipped_weapon'])} | Armor: {format_item(payload['equipped_armor'])} | Accessory: {format_item(payload['equipped_accessory'])}"
         if not send_streamerbot_message(msg):
-            await ctx.send(msg)
+            await send_twitch_chat(ctx, msg)
 
     @commands.command(name='gold', aliases=['money'])
     async def cmd_gold(self, ctx: commands.Context):
         player = db.get_player(ctx.chatter.name)
         if not player:
-            await ctx.send(f"@{ctx.chatter.name} Please !register first.")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} Please !register first.")
             return
 
         t1 = player.get('scroll_t1', 0)
@@ -390,7 +390,7 @@ class InfoCog(commands.Component):
         if t1 > 0 or t2 > 0 or t3 > 0:
             msg += f" | ใบกันแตก: [Basic={t1}] [Blessed={t2}] [Divine={t3}]"
 
-        await ctx.send(msg)
+        await send_twitch_chat(ctx, msg)
 
     @commands.command(name='shop')
     async def cmd_shop(self, ctx: commands.Context):
@@ -407,23 +407,23 @@ class InfoCog(commands.Component):
         else:
             msg += f"\n*(ไอเทมอื่นๆ จะปลดล็อคเมื่อเลเวล 11 ขึ้นไป)*"
 
-        await ctx.send(msg)
+        await send_twitch_chat(ctx, msg)
 
     @commands.command(name='buy')
     async def cmd_buy(self, ctx: commands.Context, item_name: str = ""):
         if not item_name:
-            await ctx.send(f"@{ctx.chatter.name} Usage: !buy potion/scroll")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} Usage: !buy potion/scroll")
             return
 
         player = db.get_player(ctx.chatter.name)
         if not player:
-            await ctx.send(f"@{ctx.chatter.name} Please !register first.")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} Please !register first.")
             return
 
         from game.shop import buy_shop_item
         success, msg = buy_shop_item(ctx.chatter.name, item_name)
         if success:
-            await ctx.send(f"@{ctx.chatter.name} {msg}")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} {msg}")
             if item_name.lower().strip() == 'potion':
                 from utils import emit_to_overlay
                 from game.combat import get_party_data
@@ -431,7 +431,7 @@ class InfoCog(commands.Component):
                 if boss and player['id'] in boss.get('participants', []):
                     emit_to_overlay('party_update', get_party_data(boss))
         else:
-            await ctx.send(f"@{ctx.chatter.name} ❌ {msg}")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} ❌ {msg}")
 
     @commands.command(name='classes', aliases=['class', 'cls'])
     async def cmd_classes(self, ctx: commands.Context):
@@ -441,7 +441,7 @@ class InfoCog(commands.Component):
               "🗡️ Rogue: โจมตีคริติคอลแรง 2 เท่า และแรงขึ้น 3 เท่าถ้าบอสเลือดต่ำกว่า 30%\n" \
               "💖 Priest: สายซัพพอร์ต มีสกิลฟื้นฟูเลือดและชุบชีวิตเพื่อนร่วมทีม"
         if not send_streamerbot_message(msg):
-            await ctx.send(msg)
+            await send_twitch_chat(ctx, msg)
 
     @commands.command(name='reload')
     async def cmd_reload(self, ctx: commands.Context):
@@ -450,7 +450,7 @@ class InfoCog(commands.Component):
         is_mod = getattr(ctx.chatter, 'moderator', False) or getattr(ctx.chatter, 'is_mod', False)
         channel_owner = os.environ.get('TWITCH_CHANNEL', '').lower()
         if not is_mod and author_name.lower() != channel_owner:
-            await ctx.send(f"@{author_name} ❌ You are not allowed to use this command!")
+            await send_twitch_chat(ctx, f"@{author_name} ❌ You are not allowed to use this command!")
             return
 
         try:
@@ -501,10 +501,10 @@ class InfoCog(commands.Component):
                     bot_mod.combat_cog = cogs.combat.CombatCog(None)
                     bot_mod.info_cog = cogs.info.InfoCog(None)
 
-            await ctx.send("🔄 Cogs and game rules successfully reloaded!")
+            await send_twitch_chat(ctx, "🔄 Cogs and game rules successfully reloaded!")
             print("[Bot] Cogs and game rules successfully reloaded!")
         except Exception as e:
-            await ctx.send(f"❌ Failed to reload cogs: {e}")
+            await send_twitch_chat(ctx, f"❌ Failed to reload cogs: {e}")
             import traceback
             traceback.print_exc()
 

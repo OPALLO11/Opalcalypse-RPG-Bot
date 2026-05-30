@@ -6,7 +6,7 @@ from utils import emit_to_overlay
 from .boss_manager import boss_manager
 from .helpers import find_item_data, get_level_requirement
 from .items import distribute_loot
-from .logic import calculate_player_stats, get_element_multiplier, CLASSES
+from .logic import calculate_dynamic_boss_hp, calculate_player_stats, get_element_multiplier, CLASSES
 
 # Global player activity and buff tracking
 LAST_ACTIVE = {}  # player_id -> datetime
@@ -75,7 +75,7 @@ def calculate_damage(player, boss, skill_data):
     player_class = player.get('class', 'warrior').lower()
 
     if player_class == 'rogue' and (boss['current_hp'] / boss['max_hp']) < 0.3:
-        crit_multiplier = 3.0
+        crit_multiplier = 2.5
     elif player_class == 'rogue':
         crit_multiplier = 2.0
     else:
@@ -283,7 +283,7 @@ def _update_participants(boss, player_id):
         if pid == player_id or (last_time and (now_time - last_time) <= timeout_limit):
             active_participants.append(pid)
 
-    # Dynamic HP scaling: Base HP * (1 + (avg_lvl^1.1)*0.1) * (1 + (players-1)*0.4)
+    # Dynamic HP scaling: base formula softened by boss star tier.
     total_lvl = 0
     for pid in active_participants:
         pdata = db.get_player_by_id(pid)
@@ -291,7 +291,11 @@ def _update_participants(boss, player_id):
             total_lvl += pdata.get('level', 1)
     avg_lvl = total_lvl / max(1, len(active_participants))
 
-    new_max_hp = int(boss['base_hp'] * (1 + (avg_lvl ** 1.1) * 0.1) * (1 + (len(active_participants) - 1) * 0.4))
+    new_max_hp = calculate_dynamic_boss_hp(
+        boss['base_hp'],
+        avg_lvl,
+        len(active_participants),
+    )
 
     if new_max_hp != boss['max_hp'] or participants_changed:
         old_max_hp = boss['max_hp']
@@ -312,7 +316,8 @@ def _update_participants(boss, player_id):
     return boss
 
 
-def _apply_combat_effects(player, boss, action_type, skill_name, skill_data, cls_name, cls_data, participants):
+def _apply_combat_effects(player, boss, action_type, skill_name, skill_data, cls_name, cls_data, participants,
+                          target=None):
     """
     Process all combat effects: buffs, debuffs, healing, damage, poison DoT.
     Returns (dmg, is_crit, is_dead, left_hp, heal_msg, logged_heal_amount).
@@ -343,22 +348,25 @@ def _apply_combat_effects(player, boss, action_type, skill_name, skill_data, cls
 
             if skill_name == 'heal':
                 heal_target = None
-                # target param is passed via skill_name context — we use the original approach
-                # (target is handled at the process_action level, not here)
-                # Auto-target lowest HP party member
-                lowest_player = None
-                lowest_pct = 1.0
-                for pid in participants:
-                    pdata = db.get_player_by_id(pid)
-                    if pdata:
-                        alive, _ = check_cooldown(pid, 'respawn')
-                        if not alive: continue
-                        pstats = calculate_player_stats(pdata)
-                        pct = pdata.get('hp', 0) / pstats['max_hp']
-                        if pct < lowest_pct:
-                            lowest_pct = pct
-                            lowest_player = pdata
-                heal_target = lowest_player
+                if target:
+                    clean_target = target.replace('@', '').strip().lower()
+                    heal_target = db.get_player(clean_target)
+
+                if not heal_target:
+                    lowest_player = None
+                    lowest_pct = 1.0
+                    for pid in participants:
+                        pdata = db.get_player_by_id(pid)
+                        if pdata:
+                            alive, _ = check_cooldown(pid, 'respawn')
+                            if not alive:
+                                continue
+                            pstats = calculate_player_stats(pdata)
+                            pct = pdata.get('hp', 0) / pstats['max_hp']
+                            if pct < lowest_pct:
+                                lowest_pct = pct
+                                lowest_player = pdata
+                    heal_target = lowest_player
 
                 if not heal_target:
                     heal_target = player
@@ -556,20 +564,13 @@ def process_action(player, action_type, skill_name=None, target=None):
         if 0 <= idx < len(skills):
             skill_name = skills[idx]
 
-    # Handle priest heal targeting
-    if cls_name == 'priest' and action_type == 'skill' and skill_name == 'heal' and target:
-        clean_target = target.replace('@', '').strip().lower()
-        heal_target = db.get_player(clean_target)
-        # We'll pass the target through — the _apply_combat_effects auto-targets lowest HP
-        # but if a specific target was requested, override below
-
     # 2. Update participants & boss scaling
     boss = _update_participants(boss, player['id'])
     participants = boss.get('participants', [])
 
     # 3. Apply combat effects
     dmg, is_crit, is_dead, left_hp, heal_msg, poison_dmg = _apply_combat_effects(
-        player, boss, action_type, skill_name, skill_data, cls_name, cls_data, participants
+        player, boss, action_type, skill_name, skill_data, cls_name, cls_data, participants, target=target
     )
 
     # 4. Apply cooldowns and MP cost

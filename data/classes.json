@@ -92,7 +92,7 @@
     "skills": {
       "attack": {
         "name": "Magic Bolt",
-        "damage_multiplier": 0.9,
+        "damage_multiplier": 1.05,
         "cooldown": 3,
         "type": "magic",
         "mp_cost": 0
@@ -146,15 +146,15 @@
     },
     "passive": {
       "name": "Deadly Precision",
-      "description": "Crit chance 25% (2x damage), Crit กับ boss HP < 30% = 3x damage",
-      "base_crit_chance": 0.25,
+      "description": "Crit chance 20% (2x damage), Crit กับ boss HP < 30% = 2.5x damage",
+      "base_crit_chance": 0.20,
       "crit_multiplier": 2.0,
-      "low_hp_crit_multiplier": 3.0
+      "low_hp_crit_multiplier": 2.5
     },
     "skills": {
       "attack": {
         "name": "Quick Slash",
-        "damage_multiplier": 1.1,
+        "damage_multiplier": 1.0,
         "cooldown": 3,
         "type": "physical",
         "mp_cost": 0
@@ -163,7 +163,7 @@
         "name": "Backstab",
         "damage_multiplier": 3.5,
         "cooldown": 20,
-        "bonus_crit_chance": 0.50,
+        "bonus_crit_chance": 0.40,
         "type": "physical",
         "mp_cost": 20
       },
@@ -187,7 +187,7 @@
       },
       "ultimate": {
         "name": "Assassination",
-        "damage_multiplier": 10.0,
+        "damage_multiplier": 8.0,
         "type": "physical",
         "guaranteed_crit": true,
         "mp_cost": 40

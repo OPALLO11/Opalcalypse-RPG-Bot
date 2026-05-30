@@ -5,6 +5,12 @@ const bossContainer = document.getElementById('boss-container');
 const bossName = document.getElementById('boss-name');
 const hpBarFill = document.getElementById('hp-bar-fill');
 const hpText = document.getElementById('hp-text');
+const bossChargeContainer = document.getElementById('boss-charge-container');
+const bossChargeRing = document.getElementById('boss-charge-ring');
+const bossChargeTime = document.getElementById('boss-charge-time');
+const bossChargeAttack = document.getElementById('boss-charge-attack');
+const bossChargeType = document.getElementById('boss-charge-type');
+const bossChargeFill = document.getElementById('boss-charge-fill');
 
 const logList = document.getElementById('log-list');
 
@@ -60,6 +66,7 @@ socket.on('boss_update', (bossData) => {
     if (showParam && showParam !== 'boss') return;
     if (!bossData || bossData.status !== 'active') {
         bossContainer.classList.add('hidden');
+        hideBossCharge();
         return;
     }
 
@@ -87,8 +94,59 @@ socket.on('boss_update', (bossData) => {
     }
 });
 
+let bossChargeInterval = null;
+function hideBossCharge() {
+    if (bossChargeInterval) {
+        clearInterval(bossChargeInterval);
+        bossChargeInterval = null;
+    }
+    if (bossChargeContainer) {
+        bossChargeContainer.classList.add('hidden');
+        bossChargeContainer.classList.remove('charge-physical', 'charge-magic', 'charge-piercing');
+    }
+}
+
+socket.on('boss_charging', (data) => {
+    if (showParam && showParam !== 'boss') return;
+    if (!bossChargeContainer) return;
+
+    const duration = Math.max(1, Number(data.duration || 20));
+    const startedAt = Date.now();
+    const attackName = data.attack_name || 'Incoming Attack';
+    let attackType = (data.attack_type || 'physical').toLowerCase();
+    if (!['physical', 'magic', 'piercing'].includes(attackType)) {
+        attackType = 'physical';
+    }
+
+    bossChargeContainer.classList.remove('hidden', 'charge-physical', 'charge-magic', 'charge-piercing');
+    bossChargeContainer.classList.add(`charge-${attackType}`);
+    bossChargeAttack.innerText = attackName;
+    bossChargeType.innerText = attackType.toUpperCase();
+
+    if (bossChargeInterval) clearInterval(bossChargeInterval);
+
+    const renderCharge = () => {
+        const elapsed = (Date.now() - startedAt) / 1000;
+        const remaining = Math.max(0, duration - elapsed);
+        const progress = Math.max(0, Math.min(1, remaining / duration));
+        const percent = progress * 100;
+
+        bossChargeTime.innerText = remaining.toFixed(1);
+        bossChargeFill.style.width = `${percent}%`;
+        bossChargeRing.style.setProperty('--charge-progress', `${percent}%`);
+
+        if (remaining <= 0) {
+            hideBossCharge();
+        }
+    };
+
+    renderCharge();
+    bossChargeInterval = setInterval(renderCharge, 100);
+});
+
 socket.on('boss_defeated', (data) => {
     if (showParam && showParam !== 'boss' && showParam !== 'combat') return;
+    hideBossCharge();
 
     const li = document.createElement('li');
     let content = `<strong>🏆 Boss Defeated by ${data.winner}!</strong>`;

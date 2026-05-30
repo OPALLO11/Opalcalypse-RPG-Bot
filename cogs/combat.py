@@ -6,7 +6,7 @@ from twitchio.ext import commands
 from database import db
 from game.boss_manager import boss_manager
 from game.combat import process_action, get_party_data
-from utils import emit_to_overlay
+from utils import emit_to_overlay, send_twitch_chat
 
 
 class CombatCog(commands.Component):
@@ -17,21 +17,21 @@ class CombatCog(commands.Component):
         username = ctx.chatter.name
         player = db.get_player(username)
         if not player:
-            asyncio.create_task(ctx.send(f"@{username} Please !register <character_name> before attacking."))
+            asyncio.create_task(send_twitch_chat(ctx, f"@{username} Please !register <character_name> before attacking."))
             return
 
         res = process_action(player, action, skill_name=skill_name, target=target)
         if res['success']:
             if action == 'def':
-                asyncio.create_task(ctx.send(f"🛡️ @{username} ตั้งท่าหลบการโจมตีหมู่!"))
+                asyncio.create_task(send_twitch_chat(ctx, f"🛡️ @{username} ตั้งท่าหลบการโจมตีหมู่!"))
             elif action == 'skill' and player.get('class', 'warrior').lower() == 'priest':
                 # Announcements for Priest skills are handled inside their returned messages
-                asyncio.create_task(ctx.send(f"@{username} ✨ {res['message']}"))
+                asyncio.create_task(send_twitch_chat(ctx, f"@{username} ✨ {res['message']}"))
             elif action == 'ultimate' and player.get('class', 'warrior').lower() == 'priest':
-                asyncio.create_task(ctx.send(f"@{username} ✨ {res['message']}"))
+                asyncio.create_task(send_twitch_chat(ctx, f"@{username} ✨ {res['message']}"))
             else:
                 # Normal attack message
-                asyncio.create_task(ctx.send(f"@{username} {res['message']}"))
+                asyncio.create_task(send_twitch_chat(ctx, f"@{username} {res['message']}"))
 
             event_data = {
                 'username': username,
@@ -56,7 +56,7 @@ class CombatCog(commands.Component):
                 elif atk_type == "piercing":
                     type_th = "ทะลวง"
 
-                asyncio.create_task(ctx.send(
+                asyncio.create_task(send_twitch_chat(ctx,
                     f"⚠️ บอส {boss_name} กำลังจะใช้ท่า「{atk_name}」({type_th})! "
                     f"จะโจมตีหมู่ภายใน 20 วินาที! "
                     f"(พิมพ์ !def <สกิล> เพื่อหลบ หรือเสี่ยงตีต่อได้)"
@@ -141,15 +141,15 @@ class CombatCog(commands.Component):
                 else:
                     chat_parts.append("🎁 Loot drops: ไม่มีใครได้ของ")
 
-                asyncio.create_task(ctx.send(" | ".join(chat_parts)))
+                asyncio.create_task(send_twitch_chat(ctx, " | ".join(chat_parts)))
 
                 asyncio.create_task(self._coro_respawn())
         else:
             if action == 'skill' and (
                     "สกิลของคุณ" in res['message'] or "Your skills" in res['message'] or not skill_name):
-                asyncio.create_task(ctx.send(f"@{username} 📖 {res['message']}"))
+                asyncio.create_task(send_twitch_chat(ctx, f"@{username} 📖 {res['message']}"))
             else:
-                asyncio.create_task(ctx.send(f"@{username} ❌ {res['message']}"))
+                asyncio.create_task(send_twitch_chat(ctx, f"@{username} ❌ {res['message']}"))
 
     async def _coro_respawn(self):
         await asyncio.sleep(10)
@@ -177,30 +177,30 @@ class CombatCog(commands.Component):
     async def cmd_spawn(self, ctx: commands.Context, type_arg: str = 'normal'):
         is_mod = getattr(ctx.chatter, 'moderator', False) or getattr(ctx.chatter, 'is_mod', False)
         if not is_mod and ctx.chatter.name.lower() != os.environ.get('TWITCH_CHANNEL', '').lower():
-            await ctx.send(f"@{ctx.chatter.name} ❌ You are not allowed to use this command!")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} ❌ You are not allowed to use this command!")
             return
 
         boss = boss_manager.spawn_boss(1, boss_type=type_arg.lower())
         if boss:
             emit_to_overlay('boss_update', boss)
             emit_to_overlay('party_update', get_party_data(boss))
-            await ctx.send(f"[{boss['type'].upper()}] The {boss['name']} has been summoned by an admin!")
+            await send_twitch_chat(ctx, f"[{boss['type'].upper()}] The {boss['name']} has been summoned by an admin!")
         else:
-            await ctx.send(f"Failed to spawn boss. Invalid type: {type_arg}")
+            await send_twitch_chat(ctx, f"Failed to spawn boss. Invalid type: {type_arg}")
 
     @commands.command(name='resetchallenge')
     async def cmd_resetchallenge(self, ctx: commands.Context):
         is_mod = getattr(ctx.chatter, 'moderator', False) or getattr(ctx.chatter, 'is_mod', False)
         if not is_mod and ctx.chatter.name.lower() != os.environ.get('TWITCH_CHANNEL', '').lower():
-            await ctx.send(f"@{ctx.chatter.name} ❌ You are not allowed to use this command!")
+            await send_twitch_chat(ctx, f"@{ctx.chatter.name} ❌ You are not allowed to use this command!")
             return
 
         from game.challenge_manager import spawn_challenge
         new_challenge = spawn_challenge()
         if new_challenge:
-            await ctx.send(f"⚠️ ผู้ดูแลระบบได้รีเซ็ตความท้าทายใหม่! เป้าหมายปัจจุบัน: {new_challenge['description']}")
+            await send_twitch_chat(ctx, f"⚠️ ผู้ดูแลระบบได้รีเซ็ตความท้าทายใหม่! เป้าหมายปัจจุบัน: {new_challenge['description']}")
         else:
-            await ctx.send("Failed to spawn new challenge.")
+            await send_twitch_chat(ctx, "Failed to spawn new challenge.")
 
 
 async def prepare(bot: commands.Bot):

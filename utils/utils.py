@@ -95,6 +95,10 @@ def load_config():
             "use_python_ws_server": get_bool("STREAMERBOT_USE_PYTHON_WS_SERVER", False),
             "ws_url": os.environ.get("STREAMERBOT_WS_URL", "ws://127.0.0.1:8080/"),
             "python_ws_port": get_int("STREAMERBOT_PYTHON_WS_PORT", 6789)
+        },
+        "chat": {
+            "prefix_enabled": get_bool("TWITCH_CHAT_PREFIX_ENABLED", True),
+            "prefix": os.environ.get("TWITCH_CHAT_PREFIX", "⚔️ ")
         }
     }
 
@@ -145,9 +149,28 @@ def set_bot(bot, loop):
     _loop_instance = loop
 
 
+def format_twitch_chat_message(message):
+    """Apply the optional Twitch chat prefix without duplicating it."""
+    msg = str(message)
+    chat_config = load_config().get("chat", {})
+    if not chat_config.get("prefix_enabled", True):
+        return msg
+
+    prefix = chat_config.get("prefix", "⚔️ ")
+    if not prefix or msg.startswith(prefix):
+        return msg
+
+    return f"{prefix}{msg}"
+
+
+async def send_twitch_chat(ctx, message):
+    await ctx.send(format_twitch_chat_message(message))
+
+
 def send_streamerbot_message(message):
     """Send message to Twitch chat using RPGBot if active; fallback to Streamer.bot HTTP API"""
     global _bot_instance, _loop_instance
+    message = format_twitch_chat_message(message)
 
     def _fallback_send_streamerbot(msg):
         config = load_config()

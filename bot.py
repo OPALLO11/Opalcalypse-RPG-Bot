@@ -15,7 +15,7 @@ from game.boss_manager import boss_manager
 from game.challenge_manager import init_challenges
 from game.combat import LAST_ACTIVE
 from game.helpers import split_message
-from utils import load_config, emit_to_overlay, send_streamerbot_message
+from utils import load_config, emit_to_overlay, send_streamerbot_message, format_twitch_chat_message
 
 load_dotenv()
 
@@ -143,6 +143,7 @@ class WSContext:
         return Chatter(self.author_name, self.author_id, self.is_mod)
 
     async def send(self, message):
+        message = format_twitch_chat_message(message)
         messages = split_message(message, max_len=400)
 
         import websockets

@@ -27,6 +27,24 @@ def handle_connect():
         socketio.emit('boss_update', boss, to=request.sid)
         from game.combat import get_party_data
         socketio.emit('party_update', get_party_data(boss), to=request.sid)
+        try:
+            from datetime import datetime
+            from game.boss_manager import boss_manager
+            state = boss_manager.boss_state.get(boss['instance_id'])
+            if state and state.get('is_charging'):
+                started = state.get('charge_start_time')
+                elapsed = (datetime.now() - started).total_seconds() if started else 0
+                remaining = max(0, 20 - elapsed)
+                if remaining > 0:
+                    next_attack = state.get('next_attack') or {}
+                    socketio.emit('boss_charging', {
+                        'boss_name': boss.get('name', 'Boss'),
+                        'attack_name': next_attack.get('name', 'Incoming Attack'),
+                        'attack_type': next_attack.get('type', 'physical'),
+                        'duration': remaining
+                    }, to=request.sid)
+        except Exception as e:
+            print(f"Error emitting boss charging state on connect: {e}")
 
     active_challenge = db.get_active_challenge()
     if active_challenge:

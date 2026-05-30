@@ -5,6 +5,7 @@ Boss repository — active boss CRUD with JSON field handling.
 import json
 from datetime import datetime
 
+from game.logic import get_boss_stars_for_avg_level
 from .base import BaseRepository
 
 
@@ -71,16 +72,7 @@ class BossRepository(BaseRepository):
             else:
                 avg_lvl = 1
 
-            if avg_lvl <= 5:
-                stars = 1
-            elif avg_lvl <= 15:
-                stars = 2
-            elif avg_lvl <= 30:
-                stars = 3
-            elif avg_lvl <= 50:
-                stars = 4
-            else:
-                stars = 5
+            stars = get_boss_stars_for_avg_level(avg_lvl)
 
             self.__class__._stars_cache[instance_id] = stars
             boss['stars'] = stars

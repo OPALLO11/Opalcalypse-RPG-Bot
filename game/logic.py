@@ -14,13 +14,51 @@ BOSSES = load_json('bosses.json')
 ITEMS = load_json('items.json')
 
 
+BOSS_HP_STAR_MULTIPLIERS = {
+    1: 0.50,
+    2: 0.70,
+    3: 0.85,
+    4: 0.95,
+    5: 1.00,
+}
+
+
+def get_boss_stars_for_avg_level(avg_lvl):
+    if avg_lvl <= 5:
+        return 1
+    if avg_lvl <= 15:
+        return 2
+    if avg_lvl <= 30:
+        return 3
+    if avg_lvl <= 50:
+        return 4
+    return 5
+
+
+def get_boss_hp_star_multiplier(stars):
+    return BOSS_HP_STAR_MULTIPLIERS.get(stars, 1.00)
+
+
 def calculate_boss_hp(base_hp, active_players):
     """
     Boss Scaling: HP = Base HP × (1 + Active Players × 0.3)
     """
     if active_players < 1:
         active_players = 1
-    return int(base_hp * (1 + active_players * 0.3))
+    stars = get_boss_stars_for_avg_level(1)
+    return int(base_hp * (1 + active_players * 0.3) * get_boss_hp_star_multiplier(stars))
+
+
+def calculate_dynamic_boss_hp(base_hp, avg_lvl, active_player_count):
+    """
+    Recalculate boss HP as party level/count changes, softened by boss star tier.
+    """
+    if active_player_count < 1:
+        active_player_count = 1
+
+    stars = get_boss_stars_for_avg_level(avg_lvl)
+    hp = base_hp * (1 + (avg_lvl ** 1.1) * 0.1) * (1 + (active_player_count - 1) * 0.4)
+    return int(hp * get_boss_hp_star_multiplier(stars))
 
 
 def get_element_multiplier(attack_element, boss_weaknesses, boss_resists):

@@ -10,7 +10,7 @@ import asyncio
 from database import db
 from game.boss_manager import boss_manager
 from game.combat import process_action, trigger_boss_aoe_attack
-from game.logic import BOSSES, calculate_player_stats
+from game.logic import BOSSES, calculate_dynamic_boss_hp, calculate_player_stats
 
 
 class TestBossSkills(unittest.TestCase):
@@ -86,6 +86,22 @@ class TestBossSkills(unittest.TestCase):
                     self.assertIn('type', skill)
                     self.assertIn('description', skill)
                     self.assertIn(skill['type'], ['physical', 'magic', 'piercing'])
+
+    def test_boss_hp_star_tuning(self):
+        print("\n--- Testing Boss HP Star Tuning ---")
+        base_hp = 10000
+
+        star_1_hp = calculate_dynamic_boss_hp(base_hp, avg_lvl=5, active_player_count=1)
+        star_2_hp = calculate_dynamic_boss_hp(base_hp, avg_lvl=6, active_player_count=1)
+        star_5_hp = calculate_dynamic_boss_hp(base_hp, avg_lvl=60, active_player_count=1)
+
+        old_star_1_hp = base_hp * (1 + (5 ** 1.1) * 0.1)
+        old_star_2_hp = base_hp * (1 + (6 ** 1.1) * 0.1)
+        old_star_5_hp = int(base_hp * (1 + (60 ** 1.1) * 0.1))
+
+        self.assertEqual(star_1_hp, int(old_star_1_hp * 0.50))
+        self.assertEqual(star_2_hp, int(old_star_2_hp * 0.70))
+        self.assertEqual(star_5_hp, old_star_5_hp)
 
     def test_spawn_and_warning_skill_selection(self):
         print("\n--- Testing Spawn and Warning Skill Selection ---")
