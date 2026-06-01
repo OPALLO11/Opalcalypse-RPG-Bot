@@ -1,14 +1,12 @@
-"""
-Combat log repository — batched writes + rankings/participant queries.
-"""
-
 import json
 import queue
 import threading
 from datetime import datetime
 
+from sqlalchemy import func
 from .base import BaseRepository
-from ..connection import get_connection
+from ..connection import SessionLocal
+from ..models import CombatLog, Player, BossParticipant
 
 
 class CombatLogRepository(BaseRepository):
@@ -24,43 +22,33 @@ class CombatLogRepository(BaseRepository):
         self._worker = threading.Thread(target=self._combat_log_worker, daemon=True)
         self._worker.start()
 
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
-
     def add_combat_log(self, boss_instance_id, player_id, action, damage, is_crit):
-        """Queue a combat log entry for batched writing."""
-        now = datetime.now().isoformat()
+        now = datetime.utcnow().isoformat()
         self._queue.put((boss_instance_id, player_id, action, damage, is_crit, now))
 
     def get_boss_rankings(self, boss_instance_id):
-        with self._read_only() as (conn, c):
-            c.execute(
-                '''SELECT player_id, SUM(damage) as total_damage
-                   FROM combat_log
-                   WHERE boss_instance_id = ?
-                   GROUP BY player_id
-                   ORDER BY total_damage DESC''',
-                (boss_instance_id,),
-            )
-            rows = c.fetchall()
+        with self._read_only() as session:
+            rows = session.query(
+                CombatLog.player_id,
+                func.sum(CombatLog.damage).label('total_damage')
+            ).filter(CombatLog.boss_instance_id == boss_instance_id) \
+             .group_by(CombatLog.player_id) \
+             .order_by(func.sum(CombatLog.damage).desc()) \
+             .all()
 
         return [
-            {'id': row['player_id'], 'rank': idx + 1, 'damage': row['total_damage']}
+            {'id': row.player_id, 'rank': idx + 1, 'damage': row.total_damage}
             for idx, row in enumerate(rows)
         ]
 
     def get_challenge_participants(self, since_iso):
-        """Return distinct player IDs that logged combat since *since_iso*."""
-        with self._read_only() as (conn, c):
-            c.execute(
-                "SELECT DISTINCT player_id FROM combat_log WHERE timestamp >= ?",
-                (since_iso,),
-            )
-            return [row['player_id'] for row in c.fetchall()]
+        with self._read_only() as session:
+            rows = session.query(CombatLog.player_id).filter(
+                CombatLog.timestamp >= since_iso
+            ).distinct().all()
+            return [row.player_id for row in rows]
 
     def flush(self):
-        """Force write all currently queued logs immediately in the caller thread."""
         items = []
         while not self._queue.empty():
             try:
@@ -73,18 +61,12 @@ class CombatLogRepository(BaseRepository):
             self._write_batch(items)
 
     def shutdown(self):
-        """Stop the background worker thread cleanly."""
         self._stop_event.set()
         self._queue.put(None)
         if self._worker.is_alive():
             self._worker.join(timeout=2.0)
 
-    # ------------------------------------------------------------------
-    # Background worker
-    # ------------------------------------------------------------------
-
     def _combat_log_worker(self):
-        """Background thread that batches and writes combat logs every second."""
         while not self._stop_event.is_set():
             items = []
             try:
@@ -107,21 +89,24 @@ class CombatLogRepository(BaseRepository):
                 self._write_batch(items)
 
     def _write_batch(self, items):
-        """Perform the actual database batch write operation."""
         healing_actions = ('heal', 'sanctuary', 'miracle')
         with self._lock:
-            conn = get_connection()
+            session = SessionLocal()
             try:
-                c = conn.cursor()
-                conn.execute("BEGIN TRANSACTION")
-
                 player_damage = {}
                 boss_participants = {}
                 log_entries = []
 
                 for boss_instance_id, player_id, action, damage, is_crit, timestamp in items:
                     log_entries.append(
-                        (boss_instance_id, player_id, action, damage, is_crit, timestamp)
+                        CombatLog(
+                            boss_instance_id=boss_instance_id,
+                            player_id=player_id,
+                            action=action,
+                            damage=damage,
+                            is_crit=is_crit,
+                            timestamp=timestamp
+                        )
                     )
 
                     is_healing = action.lower() in healing_actions
@@ -135,48 +120,27 @@ class CombatLogRepository(BaseRepository):
                     boss_participants[boss_instance_id].add(player_id)
 
                 # 1. Insert all combat logs
-                c.executemany(
-                    '''INSERT INTO combat_log
-                           (boss_instance_id, player_id, action, damage, is_crit, timestamp)
-                       VALUES (?, ?, ?, ?, ?, ?)''',
-                    log_entries,
-                )
+                session.add_all(log_entries)
 
                 # 2. Update players total damage
                 for p_id, total_dmg in player_damage.items():
                     if total_dmg > 0:
-                        c.execute(
-                            "UPDATE players SET total_damage = total_damage + ? WHERE id = ?",
-                            (total_dmg, p_id),
-                        )
+                        player = session.query(Player).filter_by(id=p_id).first()
+                        if player:
+                            player.total_damage += total_dmg
 
-                # 3. Update boss participants
+                # 3. Update boss participants (now with association table)
                 for b_id, p_ids in boss_participants.items():
-                    c.execute(
-                        "SELECT participants FROM bosses WHERE instance_id = ?",
-                        (b_id,),
-                    )
-                    boss_row = c.fetchone()
-                    if boss_row:
-                        current_parts = (
-                            json.loads(boss_row['participants'])
-                            if boss_row['participants']
-                            else []
-                        )
-                        new_parts_added = False
-                        for p_id in p_ids:
-                            if p_id not in current_parts:
-                                current_parts.append(p_id)
-                                new_parts_added = True
-                        if new_parts_added:
-                            c.execute(
-                                "UPDATE bosses SET participants = ? WHERE instance_id = ?",
-                                (json.dumps(current_parts), b_id),
-                            )
+                    existing_bps = session.query(BossParticipant).filter_by(boss_instance_id=b_id).all()
+                    existing_pids = {bp.player_id for bp in existing_bps}
+                    
+                    for p_id in p_ids:
+                        if p_id not in existing_pids:
+                            session.add(BossParticipant(boss_instance_id=b_id, player_id=p_id))
 
-                conn.commit()
+                session.commit()
             except Exception as e:
                 print(f"Error in batch logger: {e}")
-                conn.rollback()
+                session.rollback()
             finally:
-                conn.close()
+                session.close()

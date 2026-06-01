@@ -1,74 +1,55 @@
-"""
-Database connection management.
-
-Provides a shared connection factory and context managers for
-transactional (write) and read-only database access.
-"""
-
 import os
-import sqlite3
 from contextlib import contextmanager
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import event
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
 DB_PATH = os.path.join(DATA_DIR, 'database.db')
 
+os.makedirs(DATA_DIR, exist_ok=True)
+engine = create_engine(f"sqlite:///{DB_PATH}", connect_args={"check_same_thread": False})
 
-def _dict_factory(cursor, row):
-    """Row factory that returns dicts keyed by column name."""
-    return {col[0]: row[idx] for idx, col in enumerate(cursor.description)}
+@event.listens_for(engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA synchronous=NORMAL")
+    cursor.close()
 
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def get_connection():
-    """Create a new SQLite connection with WAL mode and dict row factory."""
-    os.makedirs(DATA_DIR, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-    conn.execute('PRAGMA journal_mode=WAL;')
-    conn.row_factory = _dict_factory
-    return conn
-
+    # Legacy wrapper if any code still expects a raw sqlite3 connection directly
+    return engine.raw_connection()
 
 @contextmanager
 def transact(lock):
     """
-    Context manager for write operations.
-
-    Acquires *lock*, yields ``(conn, cursor)``, auto-commits on success,
-    rolls back on exception, and always closes the connection.
-
-    Usage::
-
-        with transact(self.lock) as (conn, c):
-            c.execute("UPDATE ...", (...))
+    Context manager for write operations using SQLAlchemy sessions.
+    Acquires *lock*, yields a ``Session``, auto-commits on success,
+    rolls back on exception, and always closes the session.
     """
     with lock:
-        conn = get_connection()
+        session = SessionLocal()
         try:
-            c = conn.cursor()
-            yield conn, c
-            conn.commit()
+            yield session
+            session.commit()
         except Exception:
-            conn.rollback()
+            session.rollback()
             raise
         finally:
-            conn.close()
-
+            session.close()
 
 @contextmanager
 def read_only():
     """
     Context manager for read-only queries (no lock needed).
-
-    Yields ``(conn, cursor)`` and always closes the connection.
-
-    Usage::
-
-        with read_only() as (conn, c):
-            c.execute("SELECT ...", (...))
-            rows = c.fetchall()
+    Yields a ``Session`` and always closes it.
     """
-    conn = get_connection()
+    session = SessionLocal()
     try:
-        c = conn.cursor()
-        yield conn, c
+        yield session
     finally:
-        conn.close()
+        session.close()

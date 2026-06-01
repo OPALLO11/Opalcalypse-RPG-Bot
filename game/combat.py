@@ -39,18 +39,43 @@ def set_player_buff(player_id, buff_name, value, seconds):
     PLAYER_BUFFS[player_id][buff_name] = (value, datetime.datetime.now() + datetime.timedelta(seconds=seconds))
 
 
+import time
+
+COOLDOWNS = {}  # (player_id, action) -> expires_at_timestamp
+
+import sys
+
+if 'game.combat' in sys.modules:
+    _old_combat = sys.modules['game.combat']
+    if hasattr(_old_combat, 'COOLDOWNS'):
+        COOLDOWNS = _old_combat.COOLDOWNS
+
+
 def check_cooldown(player_id, action):
-    expires_at_iso = db.get_cooldown(player_id, action)
-    if expires_at_iso:
-        expires_at = datetime.datetime.fromisoformat(expires_at_iso)
-        if datetime.datetime.now() < expires_at:
-            return False, (expires_at - datetime.datetime.now()).total_seconds()
+    expires_at = COOLDOWNS.get((player_id, action))
+    if expires_at:
+        now = time.time()
+        if now < expires_at:
+            return False, expires_at - now
     return True, 0
 
 
 def set_cooldown(player_id, action, seconds):
-    expires_at = datetime.datetime.now() + datetime.timedelta(seconds=seconds)
-    db.set_cooldown(player_id, action, expires_at.isoformat())
+    COOLDOWNS[(player_id, action)] = time.time() + seconds
+
+
+def clear_cooldown(player_id, action):
+    if (player_id, action) in COOLDOWNS:
+        del COOLDOWNS[(player_id, action)]
+
+
+def get_all_respawn_cooldowns():
+    now = time.time()
+    dead_pids = set()
+    for (pid, act), expires_at in COOLDOWNS.items():
+        if act == 'respawn' and now < expires_at:
+            dead_pids.add(pid)
+    return dead_pids
 
 
 def calculate_damage(player, boss, skill_data):
@@ -404,7 +429,7 @@ def _apply_combat_effects(player, boss, action_type, skill_name, skill_data, cls
                         heal_amount = int(pstats['max_hp'] * 0.50)
                         total_healed += heal_amount
                         if not alive:
-                            db.clear_cooldown(pid, 'respawn')
+                            clear_cooldown(pid, 'respawn')
                             db.update_player_hp(pid, heal_amount)
                         else:
                             new_hp = min(pstats['max_hp'], pdata.get('hp', 0) + heal_amount)
@@ -657,17 +682,7 @@ def revive_party_members(user):
     participants = boss.get('participants', [])
 
     # Find all players with active respawn cooldowns
-    rows = db.cooldowns.get_all_respawn_cooldowns()
-
-    dead_pids = set()
-    now = datetime.datetime.now()
-    for row in rows:
-        try:
-            exp = datetime.datetime.fromisoformat(row['expires_at'])
-            if now < exp:
-                dead_pids.add(row['player_id'])
-        except Exception:
-            pass
+    dead_pids = get_all_respawn_cooldowns()
 
     all_to_check = set(participants) | dead_pids
 
@@ -677,7 +692,7 @@ def revive_party_members(user):
     for pid in all_to_check:
         alive, _ = check_cooldown(pid, 'respawn')
         if not alive:
-            db.clear_cooldown(pid, 'respawn')
+            clear_cooldown(pid, 'respawn')
             p_data = db.get_player_by_id(pid)
             if p_data:
                 p_stats = calculate_player_stats(p_data)
@@ -719,7 +734,7 @@ def revive_single_player(user, target_name):
     if alive:
         return False, f"{p_data['character_name'] or p_data['username']} ยังไม่ตาย!"
 
-    db.clear_cooldown(p_data['id'], 'respawn')
+    clear_cooldown(p_data['id'], 'respawn')
     p_stats = calculate_player_stats(p_data)
     db.update_player_hp(p_data['id'], p_stats['max_hp'])
 

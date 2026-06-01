@@ -58,11 +58,11 @@ class TestBossSkills(unittest.TestCase):
         conn = db.get_connection()
         try:
             conn.execute("DELETE FROM players WHERE username LIKE 'test_user_%'")
-            conn.execute("DELETE FROM cooldowns WHERE player_id IN (?, ?, ?, ?)",
-                         (self.warrior['id'], self.mage['id'], self.rogue['id'], self.priest['id']))
             conn.commit()
         finally:
             conn.close()
+        import game.combat
+        game.combat.COOLDOWNS.clear()
 
     def test_boss_skills_loaded(self):
         print("\n--- Testing Boss Skills Config Loading ---")
@@ -171,16 +171,17 @@ class TestBossSkills(unittest.TestCase):
 
             # All 4 players defend
             # Clear cooldowns first
-            db.clear_cooldown(self.warrior['id'], 'respawn')
-            db.clear_cooldown(self.mage['id'], 'respawn')
-            db.clear_cooldown(self.rogue['id'], 'respawn')
-            db.clear_cooldown(self.priest['id'], 'respawn')
+            import game.combat
+            game.combat.clear_cooldown(self.warrior['id'], 'respawn')
+            game.combat.clear_cooldown(self.mage['id'], 'respawn')
+            game.combat.clear_cooldown(self.rogue['id'], 'respawn')
+            game.combat.clear_cooldown(self.priest['id'], 'respawn')
 
             # Clear def cooldowns too
-            db.clear_cooldown(self.warrior['id'], 'def')
-            db.clear_cooldown(self.mage['id'], 'def')
-            db.clear_cooldown(self.rogue['id'], 'def')
-            db.clear_cooldown(self.priest['id'], 'def')
+            game.combat.clear_cooldown(self.warrior['id'], 'def')
+            game.combat.clear_cooldown(self.mage['id'], 'def')
+            game.combat.clear_cooldown(self.rogue['id'], 'def')
+            game.combat.clear_cooldown(self.priest['id'], 'def')
 
             # Reload local player variables to get fresh HP
             p_w = db.get_player("test_user_warrior")
@@ -240,8 +241,9 @@ class TestBossSkills(unittest.TestCase):
         state['next_attack'] = {'name': 'Super Magic Blast', 'type': 'magic'}
 
         # Clear cooldowns
-        db.clear_cooldown(self.warrior['id'], 'respawn')
-        db.clear_cooldown(self.mage['id'], 'respawn')
+        import game.combat
+        game.combat.clear_cooldown(self.warrior['id'], 'respawn')
+        game.combat.clear_cooldown(self.mage['id'], 'respawn')
 
         # Two players do actions instead of defending (so they take undefended fatal damage)
         p_w = db.get_player("test_user_warrior")

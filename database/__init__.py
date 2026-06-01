@@ -18,7 +18,6 @@ from .repositories import (
     PlayerRepository,
     BossRepository,
     ItemRepository,
-    CooldownRepository,
     CombatLogRepository,
     ChallengeRepository,
     ArtRepository,
@@ -42,7 +41,6 @@ class DatabaseManager:
         self.players = PlayerRepository(self.lock)
         self.bosses = BossRepository(self.lock)
         self.items = ItemRepository(self.lock)
-        self.cooldowns = CooldownRepository(self.lock)
         self.combat_logs = CombatLogRepository(self.lock)
         self.challenges = ChallengeRepository(self.lock)
         self.art = ArtRepository(self.lock)
@@ -98,16 +96,6 @@ class DatabaseManager:
     # Items
     def add_item(self, owner_id, item_data, boss_name=""):
         return self.items.add_item(owner_id, item_data, boss_name)
-
-    # Cooldowns
-    def get_cooldown(self, player_id, action):
-        return self.cooldowns.get_cooldown(player_id, action)
-
-    def set_cooldown(self, player_id, action, expires_at_iso):
-        return self.cooldowns.set_cooldown(player_id, action, expires_at_iso)
-
-    def clear_cooldown(self, player_id, action):
-        return self.cooldowns.clear_cooldown(player_id, action)
 
     # Combat logs
     def add_combat_log(self, boss_instance_id, player_id, action, damage, is_crit):
